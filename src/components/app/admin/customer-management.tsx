@@ -244,7 +244,7 @@ export default function CustomerManagement() {
                         </div>
                     </div>
                 </CardContent>
-                <CardFooter className="border-t pt-4 mt-auto p-4">
+                <CardFooter className="border-t pt-4">
                     <div className="flex w-full justify-center gap-2">
                         <Button variant="outline" size="sm" className="flex-1">
                             <Edit className="h-4 w-4 md:mr-2" />
@@ -254,10 +254,17 @@ export default function CustomerManagement() {
                            <History className="h-4 w-4 md:mr-2" />
                            <span className="hidden md:inline">Historial</span>
                         </Button>
-                         <Button variant="destructive" size="sm" className="flex-1">
-                            <Trash2 className="h-4 w-4 md:mr-2" />
-                            <span className="hidden md:inline">Eliminar</span>
-                        </Button>
+                         <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button variant="destructive" size="icon">
+                                    <Trash2 className="h-4 w-4" />
+                                    <span className="sr-only">Eliminar</span>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>Eliminar cliente</p>
+                            </TooltipContent>
+                        </Tooltip>
                     </div>
                 </CardFooter>
             </Card>
