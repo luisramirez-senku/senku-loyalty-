@@ -45,8 +45,8 @@ const demoPrograms = [
 ];
 
 const demoUsers = [
-    { id: 'user_1', name: 'Laura Gómez', email: 'laura.g@cashier.com', role: 'Cajero', status: 'Activo', lastLogin: '2024-07-20', initials: 'LG' },
-    { id: 'user_2', name: 'Pedro Morales', email: 'pedro.m@manager.com', role: 'Gerente', status: 'Activo', lastLogin: '2024-07-21', initials: 'PM' }
+    { name: 'Laura Gómez', email: 'laura.g@cashier.com', role: 'Cajero', status: 'Activo', lastLogin: '2024-07-20', initials: 'LG' },
+    { name: 'Pedro Morales', email: 'pedro.m@manager.com', role: 'Gerente', status: 'Activo', lastLogin: '2024-07-21', initials: 'PM' }
 ];
 
 export interface AuthContextType {
