@@ -41,10 +41,6 @@ const demoRewards = [
     { id: "rew_4", name: "Bebida Premium", description: "Cualquier bebida especial de nuestro menú.", cost: 3500 },
 ];
 
-const demoPrograms = [
-    { id: "C9Lh2V7aCq3v8xY5kF2w", name: "Café Puntos", type: "Puntos", status: "Activo", members: 125, created: "2024-01-10", description: "Gana puntos con cada sorbo y disfruta de beneficios.", rules: { pointsPerAmount: 10, amountForPoints: 1 }, design: { logoText: "Café Puntos", backgroundColor: "#63412C", foregroundColor: "#FFFFFF", labelColor: "#EFEBE9" } }
-];
-
 const demoUsers = [
     { name: 'Laura Gómez', email: 'laura.g@cashier.com', role: 'Cajero', status: 'Activo', lastLogin: '2024-07-20', initials: 'LG' },
     { name: 'Pedro Morales', email: 'pedro.m@manager.com', role: 'Gerente', status: 'Activo', lastLogin: '2024-07-21', initials: 'PM' }
@@ -93,12 +89,6 @@ const seedInitialData = async (userId: string, userName: string, userEmail: stri
     demoRewards.forEach(reward => {
         const rewardRef = doc(collection(db, "rewards"));
         batch.set(rewardRef, { ...reward, id: rewardRef.id });
-    });
-
-    // 5. Seed programs
-    demoPrograms.forEach(program => {
-        const programRef = doc(db, "programs", program.id); // Use predefined ID
-        batch.set(programRef, { ...program, members: demoCustomers.length });
     });
 
     await batch.commit();
