@@ -5,19 +5,12 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, CreditCard, Star, Percent } from "lucide-react";
+import { MoreHorizontal, PlusCircle, CreditCard, Star, Percent, Users } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,11 +60,11 @@ const programs = [
 const TypeIcon = ({ type }: { type: string }) => {
     switch (type) {
         case "Puntos":
-            return <Star className="h-4 w-4 text-muted-foreground" />;
+            return <Star className="h-4 w-4" />;
         case "Sellos":
-            return <CreditCard className="h-4 w-4 text-muted-foreground" />;
+            return <CreditCard className="h-4 w-4" />;
         case "Cashback":
-            return <Percent className="h-4 w-4 text-muted-foreground" />;
+            return <Percent className="h-4 w-4" />;
         default:
             return null;
     }
@@ -81,71 +74,57 @@ export default function ProgramManagement() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Programas</h2>
+        <div>
+            <h2 className="text-3xl font-bold tracking-tight">Programas</h2>
+            <p className="text-muted-foreground">
+                Cree y gestione sus programas de lealtad.
+            </p>
+        </div>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" /> Crear Programa
         </Button>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Programas de lealtad</CardTitle>
-          <CardDescription>
-            Cree y gestione sus programas de lealtad.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre del programa</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="hidden md:table-cell">Creado</TableHead>
-                <TableHead className="text-right">Miembros</TableHead>
-                <TableHead>
-                  <span className="sr-only">Acciones</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {programs.map((program, index) => (
-                <TableRow key={index}>
-                  <TableCell className="font-medium">{program.name}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                        <TypeIcon type={program.type} />
-                        {program.type}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={program.status === 'Activo' ? 'default' : program.status === 'Borrador' ? 'outline' : 'secondary'}>{program.status}</Badge>
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {program.created}
-                  </TableCell>
-                  <TableCell className="text-right">{program.members.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Menú de palanca</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
-                        <DropdownMenuItem>Ver detalles</DropdownMenuItem>
-                        <DropdownMenuItem>Archivar</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {programs.map((program, index) => (
+          <Card key={index} className="flex flex-col">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <CardTitle>{program.name}</CardTitle>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                    <Button aria-haspopup="true" size="icon" variant="ghost">
+                        <MoreHorizontal className="h-4 w-4" />
+                        <span className="sr-only">Menú de palanca</span>
+                    </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                    <DropdownMenuItem>Editar</DropdownMenuItem>
+                    <DropdownMenuItem>Ver detalles</DropdownMenuItem>
+                    <DropdownMenuItem>Archivar</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+              <CardDescription>
+                <div className="flex items-center gap-2 text-sm">
+                    <TypeIcon type={program.type} />
+                    <span>{program.type}</span>
+                </div>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex-1 space-y-4">
+               <Badge variant={program.status === 'Activo' ? 'default' : program.status === 'Borrador' ? 'outline' : 'secondary'}>{program.status}</Badge>
+               <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Users className="h-4 w-4" />
+                    <span>{program.members.toLocaleString()} miembros</span>
+               </div>
+            </CardContent>
+            <CardFooter className="text-xs text-muted-foreground">
+                Creado el {program.created}
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
     </div>
   );
 }
