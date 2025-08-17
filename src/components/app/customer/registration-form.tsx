@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,6 +19,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -26,6 +28,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import { useState } from "react";
 import { Loader } from "lucide-react";
+import Image from "next/image";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -77,14 +80,25 @@ export default function CustomerRegistrationForm({ programId }: { programId: str
             <CardHeader>
                 <CardTitle className="text-center text-2xl">¡Gracias por registrarte!</CardTitle>
                 <CardDescription className="text-center">
-                Ya eres parte de nuestro programa de lealtad. Pronto recibirás un correo con tu tarjeta digital.
+                Tu tarjeta digital está lista. Agrégala a tu billetera para un fácil acceso.
                 </CardDescription>
             </CardHeader>
-            <CardContent className="text-center">
-                <Link href="/" passHref>
-                    <Button>Volver al inicio</Button>
-                </Link>
+            <CardContent className="space-y-4">
+                <Button className="w-full h-12">
+                    <Image src="/apple-wallet.svg" alt="Apple Wallet" width={24} height={24} className="mr-2" />
+                    Añadir a Apple Wallet
+                </Button>
+                <Button className="w-full h-12" variant="outline">
+                    <Image src="/google-wallet.svg" alt="Google Wallet" width={24} height={24} className="mr-2" />
+                    Añadir a Google Wallet
+                </Button>
             </CardContent>
+            <CardFooter className="text-center flex-col gap-4">
+                <p className="text-xs text-muted-foreground">También recibirás tu tarjeta por correo electrónico.</p>
+                 <Link href="/" passHref>
+                    <Button variant="link">Volver al inicio</Button>
+                </Link>
+            </CardFooter>
         </Card>
     );
   }
