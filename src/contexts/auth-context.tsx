@@ -8,7 +8,8 @@ import {
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
     signOut,
-    UserCredential
+    UserCredential,
+    sendPasswordResetEmail,
 } from 'firebase/auth';
 import { app, db, auth } from '@/lib/firebase/client';
 import { Loader } from 'lucide-react';
@@ -55,6 +56,7 @@ export interface AuthContextType {
   login: (email: string, pass: string) => Promise<UserCredential>;
   signup: (email: string, pass: string, name: string) => Promise<UserCredential>;
   logout: () => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -133,12 +135,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return signOut(auth);
   };
 
+  const sendPasswordReset = (email: string) => {
+    return sendPasswordResetEmail(auth, email);
+  }
+
   const value: AuthContextType = {
     user,
     loading,
     login,
     signup,
     logout,
+    sendPasswordReset,
   };
 
   if (loading) {

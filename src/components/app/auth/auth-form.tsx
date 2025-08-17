@@ -161,7 +161,17 @@ export default function AuthForm({ mode }: AuthFormProps) {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contraseña</FormLabel>
+                    <div className="flex justify-between items-center">
+                      <FormLabel>Contraseña</FormLabel>
+                       {mode === 'login' && (
+                        <Link
+                          href="/forgot-password"
+                          className="text-sm font-medium text-primary hover:underline"
+                        >
+                          ¿Olvidaste tu contraseña?
+                        </Link>
+                      )}
+                    </div>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
                     </FormControl>
