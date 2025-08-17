@@ -30,31 +30,31 @@ const customers = [
   {
     name: "Liam Johnson",
     email: "liam@example.com",
-    tier: "Gold",
+    tier: "Oro",
     points: 12500,
-    segment: "High Value",
+    segment: "Alto valor",
     joined: "2023-10-18",
   },
   {
     name: "Olivia Smith",
     email: "olivia@example.com",
-    tier: "Silver",
+    tier: "Plata",
     points: 7200,
-    segment: "Frequent Buyer",
+    segment: "Comprador frecuente",
     joined: "2023-11-05",
   },
   {
     name: "Noah Williams",
     email: "noah@example.com",
-    tier: "Bronze",
+    tier: "Bronce",
     points: 1500,
-    segment: "New Member",
+    segment: "Nuevo miembro",
     joined: "2024-03-15",
   },
   {
     name: "Emma Brown",
     email: "emma@example.com",
-    tier: "Gold",
+    tier: "Oro",
     points: 25000,
     segment: "VIP",
     joined: "2022-05-20",
@@ -62,9 +62,9 @@ const customers = [
   {
     name: "Ava Jones",
     email: "ava@example.com",
-    tier: "Silver",
+    tier: "Plata",
     points: 5500,
-    segment: "At Risk",
+    segment: "En riesgo",
     joined: "2023-12-01",
   },
 ];
@@ -73,31 +73,31 @@ export default function CustomerManagement() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Customers</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Clientes</h2>
         <Button>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Customer
+          <PlusCircle className="mr-2 h-4 w-4" /> Agregar Cliente
         </Button>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Customer CRM</CardTitle>
+          <CardTitle>CRM de Clientes</CardTitle>
           <CardDescription>
-            Manage your customers and view their loyalty status.
+            Administre a sus clientes y vea el estado de su lealtad.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Customer</TableHead>
-                <TableHead>Tier</TableHead>
-                <TableHead className="hidden md:table-cell">Segment</TableHead>
+                <TableHead>Cliente</TableHead>
+                <TableHead>Nivel</TableHead>
+                <TableHead className="hidden md:table-cell">Segmento</TableHead>
                 <TableHead className="hidden md:table-cell">
-                  Joined Date
+                  Fecha de ingreso
                 </TableHead>
-                <TableHead className="text-right">Points</TableHead>
+                <TableHead className="text-right">Puntos</TableHead>
                 <TableHead>
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -111,7 +111,7 @@ export default function CustomerManagement() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={customer.tier === 'Gold' ? 'default' : customer.tier === 'Silver' ? 'secondary' : 'outline'}>{customer.tier}</Badge>
+                    <Badge variant={customer.tier === 'Oro' ? 'default' : customer.tier === 'Plata' ? 'secondary' : 'outline'}>{customer.tier}</Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {customer.segment}
@@ -125,14 +125,14 @@ export default function CustomerManagement() {
                       <DropdownMenuTrigger asChild>
                         <Button aria-haspopup="true" size="icon" variant="ghost">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
+                          <span className="sr-only">Menú de palanca</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>View history</DropdownMenuItem>
-                        <DropdownMenuItem>Delete</DropdownMenuItem>
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem>Editar</DropdownMenuItem>
+                        <DropdownMenuItem>Ver historial</DropdownMenuItem>
+                        <DropdownMenuItem>Eliminar</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

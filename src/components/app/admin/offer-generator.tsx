@@ -33,11 +33,11 @@ import { Loader, Sparkles, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
-  customerId: z.string().min(1, "Customer ID is required."),
-  purchaseHistory: z.string().min(1, "Purchase history is required."),
-  loyaltyTier: z.string().min(1, "Loyalty tier is required."),
-  pointsBalance: z.coerce.number().min(0, "Points balance must be a positive number."),
-  preferences: z.string().min(1, "Preferences are required."),
+  customerId: z.string().min(1, "Se requiere la ID del cliente."),
+  purchaseHistory: z.string().min(1, "Se requiere el historial de compras."),
+  loyaltyTier: z.string().min(1, "Se requiere el nivel de lealtad."),
+  pointsBalance: z.coerce.number().min(0, "El saldo de puntos debe ser un número positivo."),
+  preferences: z.string().min(1, "Se requieren las preferencias."),
 });
 
 export default function OfferGenerator() {
@@ -50,10 +50,10 @@ export default function OfferGenerator() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       customerId: "CUST-007",
-      purchaseHistory: "Frequent coffee and pastry purchases, occasionally buys merchandise.",
-      loyaltyTier: "Gold",
+      purchaseHistory: "Compras frecuentes de café y pasteles, ocasionalmente compra mercancía.",
+      loyaltyTier: "Oro",
       pointsBalance: 12500,
-      preferences: "Enjoys trying new coffee blends, interested in discounts on merchandise.",
+      preferences: "Le gusta probar nuevas mezclas de café, interesado en descuentos en mercancía.",
     },
   });
 
@@ -68,7 +68,7 @@ export default function OfferGenerator() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate offers. Please try again.",
+        description: "No se pudieron generar las ofertas. Inténtalo de nuevo.",
       });
     } finally {
       setLoading(false);
@@ -79,15 +79,15 @@ export default function OfferGenerator() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">
-          Personalized Offer Generator
+          Generador de ofertas personalizadas
         </h2>
       </div>
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
         <Card className="lg:col-span-2 h-fit">
           <CardHeader>
-            <CardTitle>Customer Details</CardTitle>
+            <CardTitle>Detalles del cliente</CardTitle>
             <CardDescription>
-              Enter customer information to generate tailored offers.
+              Ingrese la información del cliente para generar ofertas a medida.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -98,9 +98,9 @@ export default function OfferGenerator() {
                   name="customerId"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Customer ID</FormLabel>
+                      <FormLabel>ID de cliente</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., CUST-12345" {...field} />
+                        <Input placeholder="p.ej., CUST-12345" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -111,10 +111,10 @@ export default function OfferGenerator() {
                   name="purchaseHistory"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Purchase History</FormLabel>
+                      <FormLabel>Historial de compras</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="e.g., Buys coffee every morning..."
+                          placeholder="p.ej., Compra café todas las mañanas..."
                           {...field}
                         />
                       </FormControl>
@@ -127,9 +127,9 @@ export default function OfferGenerator() {
                   name="loyaltyTier"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Loyalty Tier</FormLabel>
+                      <FormLabel>Nivel de lealtad</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Gold, Silver, Bronze" {...field} />
+                        <Input placeholder="p.ej., Oro, Plata, Bronce" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -140,9 +140,9 @@ export default function OfferGenerator() {
                   name="pointsBalance"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Points Balance</FormLabel>
+                      <FormLabel>Saldo de puntos</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="e.g., 5000" {...field} />
+                        <Input type="number" placeholder="p.ej., 5000" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -153,10 +153,10 @@ export default function OfferGenerator() {
                   name="preferences"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Preferences</FormLabel>
+                      <FormLabel>Preferencias</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="e.g., Prefers discounts on food..."
+                          placeholder="p.ej., Prefiere descuentos en comida..."
                           {...field}
                         />
                       </FormControl>
@@ -170,7 +170,7 @@ export default function OfferGenerator() {
                   ) : (
                     <Sparkles className="mr-2 h-4 w-4" />
                   )}
-                  Generate Offers
+                  Generar ofertas
                 </Button>
               </form>
             </Form>
@@ -179,9 +179,9 @@ export default function OfferGenerator() {
         <div className="lg:col-span-3">
           <Card className="sticky top-20">
             <CardHeader>
-              <CardTitle>Suggested Offers</CardTitle>
+              <CardTitle>Ofertas sugeridas</CardTitle>
               <CardDescription>
-                AI-generated offers tailored to the customer.
+                Ofertas generadas por IA adaptadas al cliente.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 max-h-[70vh] overflow-y-auto">
@@ -203,7 +203,7 @@ export default function OfferGenerator() {
                     <CardFooter className="flex justify-between items-center text-sm">
                       <Badge variant="secondary">{offer.discountCode}</Badge>
                       <span className="text-muted-foreground">
-                        Expires: {offer.expirationDate}
+                        Expira: {offer.expirationDate}
                       </span>
                     </CardFooter>
                   </Card>
@@ -211,7 +211,7 @@ export default function OfferGenerator() {
               ) : (
                 !loading && (
                   <div className="text-center text-muted-foreground py-16">
-                    <p>Generated offers will appear here.</p>
+                    <p>Las ofertas generadas aparecerán aquí.</p>
                   </div>
                 )
               )}

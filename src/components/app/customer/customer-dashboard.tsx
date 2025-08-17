@@ -12,18 +12,18 @@ import { Button } from "@/components/ui/button";
 
 const offers = [
   {
-    title: "Free Pastry with Drink Purchase",
-    description: "Enjoy a delicious pastry on us when you buy any large drink.",
+    title: "Pastel gratis con la compra de una bebida",
+    description: "Disfruta de un delicioso pastel por nuestra cuenta cuando compres cualquier bebida grande.",
     icon: <Gift className="h-6 w-6 text-primary" />,
   },
   {
-    title: "Double Points Wednesday",
-    description: "Earn 2x points on all your purchases, all day long.",
+    title: "Miércoles de puntos dobles",
+    description: "Gana 2x puntos en todas tus compras, durante todo el día.",
     icon: <Star className="h-6 w-6 text-primary" />,
   },
   {
-    title: "25% Off Merchandise",
-    description: "Get a special discount on all our branded mugs and tumblers.",
+    title: "25% de descuento en mercancía",
+    description: "Obtenga un descuento especial en todas nuestras tazas y vasos de marca.",
     icon: <Ticket className="h-6 w-6 text-primary" />,
   },
 ];
@@ -36,9 +36,9 @@ export default function CustomerDashboard() {
           <LoyaltyCard />
           <Card>
             <CardHeader>
-              <CardTitle>Your Personalized Offers</CardTitle>
+              <CardTitle>Tus ofertas personalizadas</CardTitle>
               <CardDescription>
-                Special deals, just for you.
+                Ofertas especiales, solo para ti.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
@@ -52,7 +52,7 @@ export default function CustomerDashboard() {
                     </div>
                   </CardHeader>
                   <CardContent className="mt-auto">
-                    <Button className="w-full">Redeem Now</Button>
+                    <Button className="w-full">Canjear ahora</Button>
                   </CardContent>
                 </Card>
               ))}

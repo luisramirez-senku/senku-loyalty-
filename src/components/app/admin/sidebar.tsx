@@ -25,12 +25,12 @@ import Logo from "@/components/app/shared/logo";
 import { Button } from "@/components/ui/button";
 
 const menuItems = [
-  { href: "/admin", label: "Dashboard", icon: BarChart2 },
-  { href: "/admin/customers", label: "Customers", icon: Users },
-  { href: "/admin/programs", label: "Programs", icon: Award },
-  { href: "/admin/offers", label: "Offers", icon: Gift },
-  { href: "/admin/promotions", label: "Promotions", icon: Megaphone },
-  { href: "/admin/users", label: "Users", icon: UserCog },
+  { href: "/admin", label: "Panel", icon: BarChart2 },
+  { href: "/admin/customers", label: "Clientes", icon: Users },
+  { href: "/admin/programs", label: "Programas", icon: Award },
+  { href: "/admin/offers", label: "Ofertas", icon: Gift },
+  { href: "/admin/promotions", label: "Promociones", icon: Megaphone },
+  { href: "/admin/users", label: "Usuarios", icon: UserCog },
 ];
 
 export function AdminSidebar() {
@@ -41,7 +41,7 @@ export function AdminSidebar() {
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-2">
           <Logo />
-          <span className="font-semibold text-lg">Senku Loyalty</span>
+          <span className="font-semibold text-lg">Senku Lealtad</span>
           <div className="flex-1" />
           <SidebarTrigger />
         </div>
@@ -66,16 +66,16 @@ export function AdminSidebar() {
       <SidebarFooter className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Settings">
+            <SidebarMenuButton tooltip="Configuración">
               <Settings />
-              <span>Settings</span>
+              <span>Configuración</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <Link href="/" legacyBehavior passHref>
-              <SidebarMenuButton tooltip="Logout">
+              <SidebarMenuButton tooltip="Cerrar sesión">
                 <LogOut />
-                <span>Logout</span>
+                <span>Cerrar sesión</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

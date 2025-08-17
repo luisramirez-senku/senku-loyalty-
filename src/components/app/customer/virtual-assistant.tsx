@@ -30,7 +30,7 @@ export default function VirtualAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "Hello! How can I help you with your loyalty account today?",
+      content: "¡Hola! ¿Cómo puedo ayudarte con tu cuenta de lealtad hoy?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -48,8 +48,8 @@ export default function VirtualAssistant() {
 
     try {
       // In a real app, this data would be fetched from a database
-      const loyaltyProgramDetails = "The program has three tiers: Bronze (0-4999 pts), Silver (5000-9999 pts), and Gold (10000+ pts). Rewards include free drinks, discounts, and exclusive offers.";
-      const customerInformation = "Customer: Charles Webb, Tier: Gold, Points: 25,000.";
+      const loyaltyProgramDetails = "El programa tiene tres niveles: Bronce (0-4999 pts), Plata (5000-9999 pts) y Oro (10000+ pts). Las recompensas incluyen bebidas gratis, descuentos y ofertas exclusivas.";
+      const customerInformation = "Cliente: Charles Webb, Nivel: Oro, Puntos: 25,000.";
 
       const result = await loyaltyProgramAssistant({
         query: input,
@@ -66,11 +66,11 @@ export default function VirtualAssistant() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "The assistant is currently unavailable. Please try again later.",
+        description: "El asistente no está disponible actualmente. Por favor, inténtalo de nuevo más tarde.",
       });
        const assistantErrorMessage: Message = {
         role: "assistant",
-        content: "I'm sorry, I'm having trouble connecting right now. Please try again in a moment.",
+        content: "Lo siento, tengo problemas para conectarme en este momento. Por favor, inténtalo de nuevo en un momento.",
       };
       setMessages((prev) => [...prev, assistantErrorMessage]);
     } finally {
@@ -93,11 +93,11 @@ export default function VirtualAssistant() {
         <CardTitle>
             <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
-                <span>Virtual Assistant</span>
+                <span>Asistente virtual</span>
             </div>
         </CardTitle>
         <CardDescription>
-          Ask me anything about your account or rewards.
+          Pregúntame cualquier cosa sobre tu cuenta o recompensas.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
@@ -157,7 +157,7 @@ export default function VirtualAssistant() {
           <Textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Type your message..."
+            placeholder="Escribe tu mensaje..."
             className="min-h-1 resize-none"
             rows={1}
             onKeyDown={(e) => {
@@ -170,7 +170,7 @@ export default function VirtualAssistant() {
           />
           <Button type="submit" size="icon" disabled={loading}>
             <Send className="h-4 w-4" />
-            <span className="sr-only">Send</span>
+            <span className="sr-only">Enviar</span>
           </Button>
         </form>
       </CardFooter>

@@ -28,28 +28,28 @@ export default function CashierView() {
     <div className="container mx-auto p-4 md:p-8">
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
-          <CardTitle>Cashier Terminal</CardTitle>
+          <CardTitle>Terminal de Cajero</CardTitle>
           <CardDescription>
-            Look up customers to apply loyalty rewards.
+            Busque clientes para aplicar recompensas de lealtad.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex gap-2">
             <div className="grid w-full items-center gap-1.5">
-              <Label htmlFor="search">Find Customer</Label>
+              <Label htmlFor="search">Encontrar Cliente</Label>
               <Input
                 type="text"
                 id="search"
-                placeholder="Name, email, or phone number"
+                placeholder="Nombre, correo electrónico o número de teléfono"
               />
             </div>
             <Button onClick={handleSearch} className="self-end">
-              <Search className="mr-2 h-4 w-4" /> Search
+              <Search className="mr-2 h-4 w-4" /> Buscar
             </Button>
           </div>
           <div className="flex justify-center">
             <Button variant="outline" size="lg">
-              <ScanLine className="mr-2 h-5 w-5" /> Scan Digital Card
+              <ScanLine className="mr-2 h-5 w-5" /> Escanear Tarjeta Digital
             </Button>
           </div>
 
@@ -62,35 +62,35 @@ export default function CashierView() {
                 </Avatar>
                 <div>
                   <CardTitle>Charles Webb</CardTitle>
-                  <CardDescription>Gold Tier Member</CardDescription>
+                  <CardDescription>Miembro de Nivel Oro</CardDescription>
                   <div className="flex items-center gap-1 text-sm font-semibold text-primary mt-1">
                     <Star className="h-4 w-4 fill-primary" />
-                    <span>25,000 Points</span>
+                    <span>25,000 Puntos</span>
                   </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <h3 className="font-semibold mb-2">Available Rewards</h3>
+                <h3 className="font-semibold mb-2">Recompensas Disponibles</h3>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between p-3 rounded-lg border bg-background">
                     <div className="flex items-center gap-3">
                       <Ticket className="h-5 w-5 text-primary" />
-                      <span className="font-medium">Free Coffee or Tea</span>
+                      <span className="font-medium">Café o Té Gratis</span>
                     </div>
-                    <Button size="sm">Apply</Button>
+                    <Button size="sm">Aplicar</Button>
                   </div>
                   <div className="flex items-center justify-between p-3 rounded-lg border bg-background">
                     <div className="flex items-center gap-3">
                       <Ticket className="h-5 w-5 text-primary" />
-                      <span className="font-medium">20% Off Merchandise</span>
+                      <span className="font-medium">20% de Descuento en Mercancía</span>
                     </div>
-                    <Button size="sm">Apply</Button>
+                    <Button size="sm">Aplicar</Button>
                   </div>
                 </div>
               </CardContent>
                <CardFooter>
                  <Button variant="outline" className="w-full" onClick={() => setCustomerFound(false)}>
-                    <User className="mr-2 h-4 w-4" /> End Session
+                    <User className="mr-2 h-4 w-4" /> Finalizar Sesión
                 </Button>
                </CardFooter>
             </Card>

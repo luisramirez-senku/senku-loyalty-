@@ -31,8 +31,8 @@ const users = [
   {
     name: "Alex Chen",
     email: "alex.chen@senku.com",
-    role: "Cashier",
-    status: "Active",
+    role: "Cajero",
+    status: "Activo",
     lastLogin: "2024-05-21 09:15 AM",
     avatar: "https://placehold.co/40x40.png",
     initials: "AC"
@@ -40,8 +40,8 @@ const users = [
   {
     name: "Brenda Rodriguez",
     email: "brenda.r@senku.com",
-    role: "Cashier",
-    status: "Active",
+    role: "Cajero",
+    status: "Activo",
     lastLogin: "2024-05-21 08:55 AM",
     avatar: "https://placehold.co/40x40.png",
     initials: "BR"
@@ -49,8 +49,8 @@ const users = [
   {
     name: "Charles Webb",
     email: "charles.w@senku.com",
-    role: "Manager",
-    status: "Active",
+    role: "Gerente",
+    status: "Activo",
     lastLogin: "2024-05-20 05:30 PM",
     avatar: "https://placehold.co/40x40.png",
     initials: "CW"
@@ -58,8 +58,8 @@ const users = [
   {
     name: "Diana Prince",
     email: "diana.p@senku.com",
-    role: "Cashier",
-    status: "Inactive",
+    role: "Cajero",
+    status: "Inactivo",
     lastLogin: "2024-04-10 11:00 AM",
     avatar: "https://placehold.co/40x40.png",
     initials: "DP"
@@ -70,28 +70,28 @@ export default function UserManagement() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Users</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Usuarios</h2>
         <Button>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add User
+          <PlusCircle className="mr-2 h-4 w-4" /> Agregar Usuario
         </Button>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>User Management</CardTitle>
+          <CardTitle>Gestión de usuarios</CardTitle>
           <CardDescription>
-            Manage accounts for your cashiers and managers.
+            Administre las cuentas de sus cajeros y gerentes.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden md:table-cell">Last Login</TableHead>
+                <TableHead>Usuario</TableHead>
+                <TableHead>Rol</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="hidden md:table-cell">Último inicio de sesión</TableHead>
                 <TableHead>
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -112,7 +112,7 @@ export default function UserManagement() {
                   </TableCell>
                   <TableCell>{user.role}</TableCell>
                   <TableCell>
-                    <Badge variant={user.status === 'Active' ? 'default' : 'secondary'}>{user.status}</Badge>
+                    <Badge variant={user.status === 'Activo' ? 'default' : 'secondary'}>{user.status}</Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {user.lastLogin}
@@ -122,14 +122,14 @@ export default function UserManagement() {
                       <DropdownMenuTrigger asChild>
                         <Button aria-haspopup="true" size="icon" variant="ghost">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
+                          <span className="sr-only">Menú de palanca</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>Reset Password</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Deactivate</DropdownMenuItem>
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem>Editar</DropdownMenuItem>
+                        <DropdownMenuItem>Restablecer contraseña</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive">Desactivar</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

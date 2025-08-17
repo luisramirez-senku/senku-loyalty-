@@ -9,7 +9,7 @@ export default function AppHeader() {
       <div className="container flex h-14 items-center">
         <Link href="/" className="flex items-center gap-2 mr-6">
           <Logo />
-          <span className="font-bold">Senku Loyalty</span>
+          <span className="font-bold">Senku Lealtad</span>
         </Link>
         <nav className="flex items-center gap-4 text-sm text-muted-foreground">
             {/* Future nav links can go here */}
@@ -17,7 +17,7 @@ export default function AppHeader() {
         <div className="flex flex-1 items-center justify-end gap-2">
             <Button variant="ghost" size="icon">
                 <User className="h-5 w-5" />
-                <span className="sr-only">Profile</span>
+                <span className="sr-only">Perfil</span>
             </Button>
         </div>
       </div>

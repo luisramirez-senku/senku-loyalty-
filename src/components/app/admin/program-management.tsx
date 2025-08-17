@@ -28,37 +28,37 @@ import {
 
 const programs = [
   {
-    name: "Premium Points Program",
-    type: "Points",
-    status: "Active",
+    name: "Programa de Puntos Premium",
+    type: "Puntos",
+    status: "Activo",
     members: 8234,
     created: "2023-01-15",
   },
   {
-    name: "Coffee Stamp Card",
-    type: "Stamps",
-    status: "Active",
+    name: "Tarjeta de sellos de café",
+    type: "Sellos",
+    status: "Activo",
     members: 4512,
     created: "2023-06-01",
   },
   {
-    name: "VIP Cashback Rewards",
+    name: "Recompensas VIP de Cashback",
     type: "Cashback",
-    status: "Active",
+    status: "Activo",
     members: 1024,
     created: "2022-11-20",
   },
   {
-    name: "Summer Promotions",
-    type: "Points",
-    status: "Draft",
+    name: "Promociones de verano",
+    type: "Puntos",
+    status: "Borrador",
     members: 0,
     created: "2024-05-10",
   },
   {
-    name: "Holiday Stampede",
-    type: "Stamps",
-    status: "Archived",
+    name: "Estampida de vacaciones",
+    type: "Sellos",
+    status: "Archivado",
     members: 7890,
     created: "2022-12-01",
   },
@@ -66,9 +66,9 @@ const programs = [
 
 const TypeIcon = ({ type }: { type: string }) => {
     switch (type) {
-        case "Points":
+        case "Puntos":
             return <Star className="h-4 w-4 text-muted-foreground" />;
-        case "Stamps":
+        case "Sellos":
             return <CreditCard className="h-4 w-4 text-muted-foreground" />;
         case "Cashback":
             return <Percent className="h-4 w-4 text-muted-foreground" />;
@@ -81,29 +81,29 @@ export default function ProgramManagement() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Programs</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Programas</h2>
         <Button>
-          <PlusCircle className="mr-2 h-4 w-4" /> Create Program
+          <PlusCircle className="mr-2 h-4 w-4" /> Crear Programa
         </Button>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Loyalty Programs</CardTitle>
+          <CardTitle>Programas de lealtad</CardTitle>
           <CardDescription>
-            Create and manage your loyalty programs.
+            Cree y gestione sus programas de lealtad.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Program Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="hidden md:table-cell">Created</TableHead>
-                <TableHead className="text-right">Members</TableHead>
+                <TableHead>Nombre del programa</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead className="hidden md:table-cell">Creado</TableHead>
+                <TableHead className="text-right">Miembros</TableHead>
                 <TableHead>
-                  <span className="sr-only">Actions</span>
+                  <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -118,7 +118,7 @@ export default function ProgramManagement() {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={program.status === 'Active' ? 'default' : program.status === 'Draft' ? 'outline' : 'secondary'}>{program.status}</Badge>
+                    <Badge variant={program.status === 'Activo' ? 'default' : program.status === 'Borrador' ? 'outline' : 'secondary'}>{program.status}</Badge>
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {program.created}
@@ -129,14 +129,14 @@ export default function ProgramManagement() {
                       <DropdownMenuTrigger asChild>
                         <Button aria-haspopup="true" size="icon" variant="ghost">
                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
+                          <span className="sr-only">Menú de palanca</span>
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Edit</DropdownMenuItem>
-                        <DropdownMenuItem>View details</DropdownMenuItem>
-                        <DropdownMenuItem>Archive</DropdownMenuItem>
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem>Editar</DropdownMenuItem>
+                        <DropdownMenuItem>Ver detalles</DropdownMenuItem>
+                        <DropdownMenuItem>Archivar</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>

@@ -13,16 +13,16 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GeneratePromotionalTextInputSchema = z.object({
-  offerName: z.string().describe('The name of the loyalty program offer.'),
-  offerDetails: z.string().describe('Detailed information about the offer, including benefits, duration, and any restrictions.'),
-  customerSegment: z.string().describe('The target customer segment for this offer.'),
-  callToAction: z.string().describe('The desired call to action for the promotion (e.g., Visit our store, Sign up now, Redeem today).'),
-  tone: z.string().describe('The desired tone of the promotional text (e.g., Exciting, Informative, Urgency).'),
+  offerName: z.string().describe('El nombre de la oferta del programa de lealtad.'),
+  offerDetails: z.string().describe('Información detallada sobre la oferta, incluidos los beneficios, la duración y cualquier restricción.'),
+  customerSegment: z.string().describe('El segmento de clientes objetivo para esta oferta.'),
+  callToAction: z.string().describe('La llamada a la acción deseada para la promoción (por ejemplo, Visite nuestra tienda, Regístrese ahora, Canjee hoy).'),
+  tone: z.string().describe('El tono deseado del texto promocional (por ejemplo, emocionante, informativo, de urgencia).'),
 });
 export type GeneratePromotionalTextInput = z.infer<typeof GeneratePromotionalTextInputSchema>;
 
 const GeneratePromotionalTextOutputSchema = z.object({
-  promotionalText: z.string().describe('The generated promotional text optimized for customer engagement.'),
+  promotionalText: z.string().describe('El texto promocional generado optimizado para la participación del cliente.'),
 });
 export type GeneratePromotionalTextOutput = z.infer<typeof GeneratePromotionalTextOutputSchema>;
 
@@ -34,17 +34,17 @@ const prompt = ai.definePrompt({
   name: 'generatePromotionalTextPrompt',
   input: {schema: GeneratePromotionalTextInputSchema},
   output: {schema: GeneratePromotionalTextOutputSchema},
-  prompt: `You are an expert marketing copywriter specializing in creating engaging promotional content for loyalty programs.
+  prompt: `Eres un redactor publicitario experto en marketing especializado en la creación de contenido promocional atractivo para programas de lealtad.
 
-  Based on the details provided, generate a compelling promotional text that will maximize customer engagement and participation.
+  Basado en los detalles proporcionados, genera un texto promocional convincente que maximizará la participación y el compromiso del cliente.
 
-  Offer Name: {{{offerName}}}
-  Offer Details: {{{offerDetails}}}
-  Target Customer Segment: {{{customerSegment}}}
-  Call to Action: {{{callToAction}}}
-  Tone: {{{tone}}}
+  Nombre de la oferta: {{{offerName}}}
+  Detalles de la oferta: {{{offerDetails}}}
+  Segmento de clientes objetivo: {{{customerSegment}}}
+  Llamada a la acción: {{{callToAction}}}
+  Tono: {{{tone}}}
 
-  Promotional Text:`, 
+  Texto promocional:`, 
 });
 
 const generatePromotionalTextFlow = ai.defineFlow(

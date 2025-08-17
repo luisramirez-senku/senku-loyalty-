@@ -14,14 +14,14 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const LoyaltyProgramAssistantInputSchema = z.object({
-  query: z.string().describe('The query from the user about the loyalty program.'),
-  loyaltyProgramDetails: z.string().describe('Details about the loyalty program, including rules, benefits, and available rewards.'),
-  customerInformation: z.string().describe('Information about the customer, including their points balance, tier, and purchase history.'),
+  query: z.string().describe('La consulta del usuario sobre el programa de lealtad.'),
+  loyaltyProgramDetails: z.string().describe('Detalles sobre el programa de lealtad, incluidas las reglas, los beneficios y las recompensas disponibles.'),
+  customerInformation: z.string().describe('Información sobre el cliente, incluido su saldo de puntos, nivel e historial de compras.'),
 });
 export type LoyaltyProgramAssistantInput = z.infer<typeof LoyaltyProgramAssistantInputSchema>;
 
 const LoyaltyProgramAssistantOutputSchema = z.object({
-  response: z.string().describe('The response to the user query, providing helpful information and resolving any issues.'),
+  response: z.string().describe('La respuesta a la consulta del usuario, proporcionando información útil y resolviendo cualquier problema.'),
 });
 export type LoyaltyProgramAssistantOutput = z.infer<typeof LoyaltyProgramAssistantOutputSchema>;
 
@@ -33,18 +33,18 @@ const prompt = ai.definePrompt({
   name: 'loyaltyProgramAssistantPrompt',
   input: {schema: LoyaltyProgramAssistantInputSchema},
   output: {schema: LoyaltyProgramAssistantOutputSchema},
-  prompt: `You are a virtual assistant for a loyalty program. Your goal is to answer user questions and resolve common issues related to the program.
+  prompt: `Eres un asistente virtual para un programa de lealtad. Tu objetivo es responder las preguntas de los usuarios y resolver problemas comunes relacionados con el programa.
 
-  Here are the details of the loyalty program:
+  Aquí están los detalles del programa de lealtad:
   {{loyaltyProgramDetails}}
 
-  Here is some information about the customer:
+  Aquí hay información sobre el cliente:
   {{customerInformation}}
 
-  Now, respond to the following user query:
+  Ahora, responde a la siguiente consulta del usuario:
   {{query}}
 
-  Provide a clear, concise, and helpful response.  If the user is asking to perform an action that is not possible, explain why it is not possible.`,
+  Proporcione una respuesta clara, concisa y útil. Si el usuario solicita realizar una acción que no es posible, explique por qué no es posible.`,
 });
 
 const loyaltyProgramAssistantFlow = ai.defineFlow(

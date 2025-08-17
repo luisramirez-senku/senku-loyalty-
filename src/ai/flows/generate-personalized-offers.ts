@@ -13,23 +13,23 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GeneratePersonalizedOffersInputSchema = z.object({
-  customerId: z.string().describe('The unique identifier for the customer.'),
-  purchaseHistory: z.string().describe('A summary of the customer\'s past purchases.'),
-  loyaltyTier: z.string().describe('The customer\'s current loyalty program tier (e.g., Bronze, Silver, Gold).'),
-  pointsBalance: z.number().describe('The customer\'s current loyalty points balance.'),
-  preferences: z.string().describe('The customer\'s preferences.'),
+  customerId: z.string().describe('El identificador único para el cliente.'),
+  purchaseHistory: z.string().describe('Un resumen de las compras pasadas del cliente.'),
+  loyaltyTier: z.string().describe('El nivel actual del programa de lealtad del cliente (por ejemplo, Bronce, Plata, Oro).'),
+  pointsBalance: z.number().describe('El saldo actual de puntos de lealtad del cliente.'),
+  preferences: z.string().describe('Las preferencias del cliente.'),
 });
 export type GeneratePersonalizedOffersInput = z.infer<typeof GeneratePersonalizedOffersInputSchema>;
 
 const GeneratePersonalizedOffersOutputSchema = z.object({
   offers: z.array(
     z.object({
-      offerName: z.string().describe('The name of the personalized offer.'),
-      offerDescription: z.string().describe('A detailed description of the offer.'),
-      discountCode: z.string().describe('The discount code associated with the offer.'),
-      expirationDate: z.string().describe('The expiration date of the offer (YYYY-MM-DD).'),
+      offerName: z.string().describe('El nombre de la oferta personalizada.'),
+      offerDescription: z.string().describe('Una descripción detallada de la oferta.'),
+      discountCode: z.string().describe('El código de descuento asociado a la oferta.'),
+      expirationDate: z.string().describe('La fecha de vencimiento de la oferta (AAAA-MM-DD).'),
     })
-  ).describe('A list of personalized offer suggestions for the customer.'),
+  ).describe('Una lista de sugerencias de ofertas personalizadas para el cliente.'),
 });
 export type GeneratePersonalizedOffersOutput = z.infer<typeof GeneratePersonalizedOffersOutputSchema>;
 
@@ -41,20 +41,20 @@ const prompt = ai.definePrompt({
   name: 'generatePersonalizedOffersPrompt',
   input: {schema: GeneratePersonalizedOffersInputSchema},
   output: {schema: GeneratePersonalizedOffersOutputSchema},
-  prompt: `You are a loyalty program expert, skilled at creating personalized offer suggestions for customers.
+  prompt: `Eres un experto en programas de lealtad, hábil en la creación de sugerencias de ofertas personalizadas para clientes.
 
-  Based on the following information about the customer, generate a list of compelling and relevant offers:
+  Basado en la siguiente información sobre el cliente, genera una lista de ofertas atractivas y relevantes:
 
-  Customer ID: {{{customerId}}}
-  Purchase History: {{{purchaseHistory}}}
-  Loyalty Tier: {{{loyaltyTier}}}
-  Points Balance: {{{pointsBalance}}}
-  Preferences: {{{preferences}}}
+  ID de cliente: {{{customerId}}}
+  Historial de compras: {{{purchaseHistory}}}
+  Nivel de lealtad: {{{loyaltyTier}}}
+  Saldo de puntos: {{{pointsBalance}}}
+  Preferencias: {{{preferences}}}
 
-  Consider their purchase history, loyalty tier, points balance and preferences to create offers that will incentivize them to make additional purchases and engage more with the loyalty program.
-  The generated offers should be specific and appealing to the individual customer.
-  Make sure to generate a unique discount code for each offer.
-  Provide today's date and add 30 days for each offer's expiration date (YYYY-MM-DD).
+  Considera su historial de compras, nivel de lealtad, saldo de puntos y preferencias para crear ofertas que los incentiven a realizar compras adicionales y a interactuar más con el programa de lealtad.
+  Las ofertas generadas deben ser específicas y atractivas para el cliente individual.
+  Asegúrate de generar un código de descuento único para cada oferta.
+  Proporciona la fecha de hoy y agrega 30 días para la fecha de vencimiento de cada oferta (AAAA-MM-DD).
   `,
 });
 

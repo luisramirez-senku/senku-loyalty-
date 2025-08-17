@@ -39,11 +39,11 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader, Sparkles, Clipboard, Check } from "lucide-react";
 
 const formSchema = z.object({
-    offerName: z.string().min(1, "Offer name is required."),
-    offerDetails: z.string().min(1, "Offer details are required."),
-    customerSegment: z.string().min(1, "Customer segment is required."),
-    callToAction: z.string().min(1, "Call to action is required."),
-    tone: z.string().min(1, "Tone is required."),
+    offerName: z.string().min(1, "Se requiere el nombre de la oferta."),
+    offerDetails: z.string().min(1, "Se requieren los detalles de la oferta."),
+    customerSegment: z.string().min(1, "Se requiere el segmento de clientes."),
+    callToAction: z.string().min(1, "Se requiere la llamada a la acción."),
+    tone: z.string().min(1, "Se requiere el tono."),
 });
 
 export default function PromotionGenerator() {
@@ -56,11 +56,11 @@ export default function PromotionGenerator() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-        offerName: "Double Points Tuesday",
-        offerDetails: "Earn double loyalty points on all purchases made on Tuesdays for the entire month of July.",
-        customerSegment: "All loyalty members",
-        callToAction: "Shop now",
-        tone: "Exciting",
+        offerName: "Martes de puntos dobles",
+        offerDetails: "Gana el doble de puntos de lealtad en todas las compras realizadas los martes durante todo el mes de julio.",
+        customerSegment: "Todos los miembros de lealtad",
+        callToAction: "Comprar ahora",
+        tone: "Emocionante",
     },
   });
 
@@ -75,7 +75,7 @@ export default function PromotionGenerator() {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to generate text. Please try again.",
+        description: "No se pudo generar el texto. Inténtalo de nuevo.",
       });
     } finally {
       setLoading(false);
@@ -86,7 +86,7 @@ export default function PromotionGenerator() {
     if (result) {
         navigator.clipboard.writeText(result.promotionalText);
         setCopied(true);
-        toast({ title: "Copied to clipboard!" });
+        toast({ title: "¡Copiado al portapapeles!" });
         setTimeout(() => setCopied(false), 2000);
     }
   }
@@ -95,15 +95,15 @@ export default function PromotionGenerator() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">
-          Promotional Text Generator
+          Generador de texto promocional
         </h2>
       </div>
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
         <Card className="lg:col-span-2 h-fit">
           <CardHeader>
-            <CardTitle>Offer Information</CardTitle>
+            <CardTitle>Información de la oferta</CardTitle>
             <CardDescription>
-              Describe the promotion to generate compelling copy.
+              Describa la promoción para generar un texto atractivo.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -114,9 +114,9 @@ export default function PromotionGenerator() {
                   name="offerName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Offer Name</FormLabel>
+                      <FormLabel>Nombre de la oferta</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Weekend Special" {...field} />
+                        <Input placeholder="p.ej., Especial de fin de semana" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -127,10 +127,10 @@ export default function PromotionGenerator() {
                   name="offerDetails"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Offer Details</FormLabel>
+                      <FormLabel>Detalles de la oferta</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="e.g., Get 20% off all pastries..."
+                          placeholder="p.ej., Obtenga un 20% de descuento en todos los pasteles..."
                           {...field}
                         />
                       </FormControl>
@@ -143,9 +143,9 @@ export default function PromotionGenerator() {
                   name="customerSegment"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Customer Segment</FormLabel>
+                      <FormLabel>Segmento de clientes</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., New customers, VIP members" {...field} />
+                        <Input placeholder="p.ej., Nuevos clientes, miembros VIP" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -156,9 +156,9 @@ export default function PromotionGenerator() {
                   name="callToAction"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Call To Action</FormLabel>
+                      <FormLabel>Llamada a la acción</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Redeem Now, Learn More" {...field} />
+                        <Input placeholder="p.ej., Canjear ahora, Más información" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -169,19 +169,19 @@ export default function PromotionGenerator() {
                     name="tone"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Tone</FormLabel>
+                        <FormLabel>Tono</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select a tone" />
+                                <SelectValue placeholder="Seleccione un tono" />
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="Exciting">Exciting</SelectItem>
-                                <SelectItem value="Informative">Informative</SelectItem>
-                                <SelectItem value="Urgency">Urgency</SelectItem>
-                                <SelectItem value="Friendly">Friendly</SelectItem>
-                                <SelectItem value="Professional">Professional</SelectItem>
+                                <SelectItem value="Exciting">Emocionante</SelectItem>
+                                <SelectItem value="Informative">Informativo</SelectItem>
+                                <SelectItem value="Urgency">Urgencia</SelectItem>
+                                <SelectItem value="Friendly">Amistoso</SelectItem>
+                                <SelectItem value="Professional">Profesional</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -194,7 +194,7 @@ export default function PromotionGenerator() {
                   ) : (
                     <Sparkles className="mr-2 h-4 w-4" />
                   )}
-                  Generate Text
+                  Generar texto
                 </Button>
               </form>
             </Form>
@@ -204,9 +204,9 @@ export default function PromotionGenerator() {
           <Card className="sticky top-20">
             <CardHeader className="flex flex-row items-start justify-between">
                 <div>
-                    <CardTitle>Generated Promotion</CardTitle>
+                    <CardTitle>Promoción generada</CardTitle>
                     <CardDescription>
-                        AI-generated copy to engage your customers.
+                        Texto generado por IA para atraer a sus clientes.
                     </CardDescription>
                 </div>
                  {result && (
@@ -228,7 +228,7 @@ export default function PromotionGenerator() {
               ) : (
                 !loading && (
                   <div className="flex justify-center items-center h-full text-center text-muted-foreground">
-                    <p>Generated promotional text will appear here.</p>
+                    <p>El texto promocional generado aparecerá aquí.</p>
                   </div>
                 )
               )}

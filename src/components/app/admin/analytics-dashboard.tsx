@@ -28,21 +28,21 @@ import {
 import type { ChartConfig } from "@/components/ui/chart";
 
 const chartData = [
-  { month: "January", signups: 186, redeemed: 80 },
-  { month: "February", signups: 305, redeemed: 200 },
-  { month: "March", signups: 237, redeemed: 120 },
-  { month: "April", signups: 273, redeemed: 190 },
-  { month: "May", signups: 209, redeemed: 130 },
-  { month: "June", signups: 214, redeemed: 140 },
+  { month: "Enero", signups: 186, redeemed: 80 },
+  { month: "Febrero", signups: 305, redeemed: 200 },
+  { month: "Marzo", signups: 237, redeemed: 120 },
+  { month: "Abril", signups: 273, redeemed: 190 },
+  { month: "Mayo", signups: 209, redeemed: 130 },
+  { month: "Junio", signups: 214, redeemed: 140 },
 ];
 
 const chartConfig = {
   signups: {
-    label: "New Sign-ups",
+    label: "Nuevos registros",
     color: "hsl(var(--primary))",
   },
   redeemed: {
-    label: "Rewards Redeemed",
+    label: "Recompensas canjeadas",
     color: "hsl(var(--secondary-foreground))",
   },
 } satisfies ChartConfig;
@@ -51,58 +51,58 @@ export default function AnalyticsDashboard() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <h2 className="text-3xl font-bold tracking-tight">Panel</h2>
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Total Members
+              Miembros totales
             </CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">12,234</div>
             <p className="text-xs text-muted-foreground">
-              +20.1% from last month
+              +20.1% desde el mes pasado
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Active Members
+              Miembros activos
             </CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">8,450</div>
             <p className="text-xs text-muted-foreground">
-              +180.1% from last month
+              +180.1% desde el mes pasado
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Rewards Redeemed</CardTitle>
+            <CardTitle className="text-sm font-medium">Recompensas canjeadas</CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+1,234</div>
             <p className="text-xs text-muted-foreground">
-              +19% from last month
+              +19% desde el mes pasado
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Points Issued</CardTitle>
+            <CardTitle className="text-sm font-medium">Puntos emitidos</CardTitle>
             <BarChart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">2,350,000</div>
             <p className="text-xs text-muted-foreground">
-              +201 since last hour
+              +201 desde la última hora
             </p>
           </CardContent>
         </Card>
@@ -110,7 +110,7 @@ export default function AnalyticsDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Overview</CardTitle>
+            <CardTitle>Visión general</CardTitle>
           </CardHeader>
           <CardContent className="pl-2">
             <ChartContainer config={chartConfig} className="h-[350px] w-full">
@@ -149,9 +149,9 @@ export default function AnalyticsDashboard() {
         </Card>
         <Card className="col-span-4 md:col-span-3">
           <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
+            <CardTitle>Actividad reciente</CardTitle>
             <CardDescription>
-              25 new members joined this month.
+              25 nuevos miembros se unieron este mes.
             </CardDescription>
           </CardHeader>
           <CardContent>
