@@ -18,6 +18,7 @@ import { Check, Loader, Rocket } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { PayPalButtons } from "@paypal/react-paypal-js";
 
 type Plan = "Esencial" | "Crecimiento" | "Empresarial";
 type TenantStatus = "Prueba" | "Activo" | "Cancelado";
@@ -77,6 +78,13 @@ const pricingPlans = [
     }
 ]
 
+// Replace with your actual PayPal Subscription Plan IDs
+const paypalPlanIds: Record<Plan, string> = {
+    Esencial: "P-YOUR-ESSENTIAL-PLAN-ID",
+    Crecimiento: "P-YOUR-GROWTH-PLAN-ID",
+    Empresarial: "P-YOUR-ENTERPRISE-PLAN-ID",
+};
+
 
 export default function BillingManagement() {
   const { user } = useAuth();
@@ -84,6 +92,7 @@ export default function BillingManagement() {
   const [tenant, setTenant] = useState<Tenant | null>(null);
   const [loading, setLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
 
   useEffect(() => {
@@ -126,13 +135,19 @@ export default function BillingManagement() {
         toast({ title: "Plan Empresarial", description: "Por favor, contáctanos para configurar un plan a tu medida." });
         return;
     }
+    setSelectedPlan(newPlan);
+  }
 
+  const handleSubscriptionSuccess = async (newPlan: Plan) => {
+    if (!user || !tenant) return;
     setIsUpdating(true);
     try {
         const tenantRef = doc(db, "tenants", user.uid);
-        await updateDoc(tenantRef, { plan: newPlan });
-        setTenant({ ...tenant, plan: newPlan });
-        toast({ title: "¡Plan actualizado!", description: `Has cambiado al plan ${newPlan}.` });
+        // If user was in trial, their status is now active
+        await updateDoc(tenantRef, { plan: newPlan, status: "Activo" });
+        setTenant({ ...tenant, plan: newPlan, status: "Activo" });
+        setSelectedPlan(null); // Hide PayPal buttons
+        toast({ title: "¡Suscripción exitosa!", description: `Has cambiado al plan ${newPlan}.` });
     } catch (error) {
         console.error("Error updating plan:", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar tu plan." });
@@ -140,6 +155,68 @@ export default function BillingManagement() {
         setIsUpdating(false);
     }
   }
+
+  const PayPalButtonsWrapper = ({ newPlan }: { newPlan: Plan }) => {
+    const createSubscription = (data: any, actions: any) => {
+        const planId = paypalPlanIds[newPlan];
+        
+        // This is where we configure the trial period
+        const subscriptionDetails: any = {
+            plan_id: planId,
+        };
+
+        if (tenant?.status === 'Prueba' && daysLeft && daysLeft > 0) {
+            subscriptionDetails.plan = {
+                billing_cycles: [{
+                    tenure_type: "TRIAL",
+                    sequence: 1,
+                    total_cycles: 1,
+                    pricing_scheme: {
+                        fixed_price: {
+                            value: "0",
+                            currency_code: "USD"
+                        }
+                    }
+                },
+                {
+                    tenure_type: "REGULAR",
+                    sequence: 2,
+                    // This should match the plan settings in PayPal
+                    total_cycles: 0, 
+                }]
+            };
+        }
+
+        return actions.subscription.create(subscriptionDetails);
+    };
+
+    const onApprove = async (data: any, actions: any) => {
+        toast({ title: "Procesando suscripción...", description: "Por favor espera." });
+        // The subscription is approved, now update the app's database
+        await handleSubscriptionSuccess(newPlan);
+    };
+    
+    const onError = (err: any) => {
+        console.error("Error en la suscripción de PayPal:", err);
+        toast({
+            variant: "destructive",
+            title: "Error de suscripción",
+            description: "No se pudo completar la suscripción. Por favor, inténtalo de nuevo o contacta con soporte.",
+        });
+    }
+
+    return (
+        <div className="mt-4 animate-in fade-in-50">
+            <PayPalButtons
+                key={newPlan}
+                createSubscription={createSubscription}
+                onApprove={onApprove}
+                onError={onError}
+                style={{ layout: 'vertical', label: 'subscribe' }}
+            />
+        </div>
+    );
+};
 
 
   if (loading) {
@@ -228,7 +305,7 @@ export default function BillingManagement() {
                     ))}
                     </ul>
                 </CardContent>
-                <CardFooter>
+                <CardFooter className="flex-col">
                     {tenant?.plan === plan.name ? (
                         <Button className="w-full" size="lg" disabled>
                             Plan Actual
@@ -238,6 +315,9 @@ export default function BillingManagement() {
                             {isUpdating ? <Loader className="mr-2 h-4 w-4 animate-spin"/> : null}
                             {plan.cta}
                         </Button>
+                    )}
+                    {selectedPlan === plan.name && (
+                        <PayPalButtonsWrapper newPlan={plan.name} />
                     )}
                 </CardFooter>
             </Card>
