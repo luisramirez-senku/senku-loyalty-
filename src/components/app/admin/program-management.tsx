@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, CreditCard, Star, Percent, Users } from "lucide-react";
+import { MoreHorizontal, PlusCircle, CreditCard, Star, Percent, Users, Link as LinkIcon } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,9 +19,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const programs = [
   {
+    id: "prog_1",
     name: "Programa de Puntos Premium",
     type: "Puntos",
     status: "Activo",
@@ -29,6 +31,7 @@ const programs = [
     created: "2023-01-15",
   },
   {
+    id: "prog_2",
     name: "Tarjeta de sellos de café",
     type: "Sellos",
     status: "Activo",
@@ -36,6 +39,7 @@ const programs = [
     created: "2023-06-01",
   },
   {
+    id: "prog_3",
     name: "Recompensas VIP de Cashback",
     type: "Cashback",
     status: "Activo",
@@ -43,6 +47,7 @@ const programs = [
     created: "2022-11-20",
   },
   {
+    id: "prog_4",
     name: "Promociones de verano",
     type: "Puntos",
     status: "Borrador",
@@ -50,6 +55,7 @@ const programs = [
     created: "2024-05-10",
   },
   {
+    id: "prog_5",
     name: "Estampida de vacaciones",
     type: "Sellos",
     status: "Archivado",
@@ -87,6 +93,7 @@ export default function ProgramManagement() {
           </Button>
         </Link>
       </div>
+      <TooltipProvider>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {programs.map((program, index) => (
           <Card key={index} className="flex flex-col">
@@ -122,12 +129,21 @@ export default function ProgramManagement() {
                     <span>{program.members.toLocaleString()} miembros</span>
                </div>
             </CardContent>
-            <CardFooter className="text-xs text-muted-foreground">
-                Creado el {program.created}
+            <CardFooter className="flex-col items-start gap-2 pt-4 border-t">
+                <Link href={`/register/${program.id}`} passHref>
+                    <Button variant="link" className="p-0 h-auto">
+                        <LinkIcon className="h-4 w-4 mr-2" />
+                        Enlace de registro
+                    </Button>
+                </Link>
+                <p className="text-xs text-muted-foreground">
+                    Creado el {program.created}
+                </p>
             </CardFooter>
           </Card>
         ))}
       </div>
+      </TooltipProvider>
     </div>
   );
 }
