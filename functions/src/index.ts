@@ -18,7 +18,7 @@ setGlobalOptions({region: "us-central1"});
 
 // This would come from your Google Cloud Service Account credentials in a real backend
 // You can find this in the Google Wallet API console after creating an issuer account.
-const ISSUER_ID = "3388000000022316666"; // <<<--- REPLACE WITH YOUR ISSUER ID
+const ISSUER_ID = "3388000000022986929"; // <<<--- REPLACE WITH YOUR ISSUER ID
 
 
 export const createWalletClass = onRequest(
