@@ -2,6 +2,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -51,6 +52,11 @@ const tenants: Tenant[] = [
 
 
 export default function TenantManagement() {
+  const router = useRouter();
+
+  const handleImpersonate = () => {
+    router.push('/admin');
+  };
   
   return (
     <Card>
@@ -103,7 +109,7 @@ export default function TenantManagement() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuItem>Ver Panel</DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleImpersonate}>Ver Panel</DropdownMenuItem>
                             <DropdownMenuItem>Editar</DropdownMenuItem>
                             <DropdownMenuItem className="text-destructive">Suspender</DropdownMenuItem>
                             </DropdownMenuContent>
