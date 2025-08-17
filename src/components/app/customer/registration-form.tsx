@@ -35,6 +35,7 @@ const formSchema = z.object({
     message: "Por favor, introduce una dirección de correo electrónico válida.",
   }),
   phone: z.string().optional(),
+  cedula: z.string().optional(),
   terms: z.boolean().refine((val) => val === true, {
     message: "Debes aceptar los términos y condiciones.",
   }),
@@ -50,6 +51,7 @@ export default function CustomerRegistrationForm({ programId }: { programId: str
       name: "",
       email: "",
       phone: "",
+      cedula: "",
       terms: false,
     },
   });
@@ -132,6 +134,19 @@ export default function CustomerRegistrationForm({ programId }: { programId: str
                   <FormLabel>Número de teléfono (Opcional)</FormLabel>
                   <FormControl>
                     <Input placeholder="Ej: 555-123-4567" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="cedula"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cédula (Opcional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ej: 1-1234-5678" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
