@@ -12,15 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Star, CalendarDays, Users, Calendar as CalendarIcon, FilterX, Info } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { MoreHorizontal, PlusCircle, Star, CalendarDays, Users, Calendar as CalendarIcon, FilterX, Info, Edit, History, Trash2 } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -213,31 +205,15 @@ export default function CustomerManagement() {
         {filteredCustomers.map((customer, index) => (
             <Card key={index} className="flex flex-col">
                 <CardHeader>
-                    <div className="flex justify-between items-start">
-                        <div className="flex items-center gap-4">
-                            <Avatar className="h-12 w-12" data-ai-hint="person portrait">
-                                <AvatarImage src={`https://placehold.co/100x100.png?text=${customer.initials}`} alt={customer.name} />
-                                <AvatarFallback>{customer.initials}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <CardTitle>{customer.name}</CardTitle>
-                                <CardDescription>{customer.email}</CardDescription>
-                            </div>
+                    <div className="flex items-center gap-4">
+                        <Avatar className="h-12 w-12" data-ai-hint="person portrait">
+                            <AvatarImage src={`https://placehold.co/100x100.png?text=${customer.initials}`} alt={customer.name} />
+                            <AvatarFallback>{customer.initials}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <CardTitle>{customer.name}</CardTitle>
+                            <CardDescription>{customer.email}</CardDescription>
                         </div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Menú de palanca</span>
-                            </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuItem>Editar</DropdownMenuItem>
-                            <DropdownMenuItem>Ver historial</DropdownMenuItem>
-                            <DropdownMenuItem>Eliminar</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
                     </div>
                 </CardHeader>
                 <CardContent className="flex-1 space-y-4">
@@ -267,6 +243,22 @@ export default function CustomerManagement() {
                         </div>
                     </div>
                 </CardContent>
+                <CardFooter className="border-t pt-4 mt-auto">
+                    <div className="flex w-full justify-end gap-2">
+                        <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4 mr-2" />
+                            Editar
+                        </Button>
+                        <Button variant="outline" size="sm">
+                           <History className="h-4 w-4 mr-2" />
+                           Ver historial
+                        </Button>
+                         <Button variant="destructive" size="sm">
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Eliminar
+                        </Button>
+                    </div>
+                </CardFooter>
             </Card>
         ))}
       </div>
