@@ -1,49 +1,47 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Shield, UserCircle, Gem } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import Logo from "@/components/app/shared/logo";
+import { ArrowRight } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background">
-      <div className="flex items-center gap-4 mb-8">
-        <Logo className="h-12 w-12 text-primary" />
-        <h1 className="text-4xl font-bold tracking-tight">Senku Lealtad</h1>
-      </div>
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl">
-            Seleccionar un rol de usuario
-          </CardTitle>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+      <Card className="w-full max-w-md text-center shadow-xl">
+        <CardHeader className="pb-4">
+           <div className="flex items-center justify-center gap-4 mb-4">
+             <Logo className="h-12 w-12 text-primary" />
+          </div>
+          <CardTitle className="text-3xl font-bold tracking-tight">Bienvenido a Senku Lealtad</CardTitle>
+          <CardDescription className="pt-2">
+            La plataforma moderna para crear y gestionar programas de lealtad que tus clientes amarán.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-4">
-          <Link href="/customer" passHref>
-            <Button size="lg" className="w-full justify-start">
-              <UserCircle className="mr-4" />
-              Cliente
+        <CardContent className="grid grid-cols-2 gap-4">
+          <Link href="/login" passHref>
+            <Button size="lg" className="w-full">
+              Iniciar Sesión
+              <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </Link>
-          <Link href="/cashier" passHref>
-            <Button size="lg" className="w-full justify-start">
-              <User className="mr-4" />
-              Cajero
-            </Button>
-          </Link>
-          <Link href="/admin" passHref>
-            <Button size="lg" className="w-full justify-start">
-              <Shield className="mr-4" />
-              Administrador
-            </Button>
-          </Link>
-           <Link href="/super-admin" passHref>
-            <Button size="lg" className="w-full justify-start" variant="outline">
-              <Gem className="mr-4" />
-              Super Admin
+           <Link href="/signup" passHref>
+            <Button size="lg" className="w-full" variant="outline">
+              Registrarse
             </Button>
           </Link>
         </CardContent>
       </Card>
+        <div className="mt-8 text-center">
+            <p className="text-muted-foreground mb-2">¿Eres un cliente final?</p>
+            <div className="flex gap-4 justify-center">
+                 <Link href="/customer" passHref>
+                    <Button variant="link">Accede a tu panel</Button>
+                </Link>
+                 <Link href="/register/demo" passHref>
+                    <Button variant="link">Únete a un programa</Button>
+                </Link>
+            </div>
+        </div>
     </div>
   );
 }

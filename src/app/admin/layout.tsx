@@ -1,7 +1,11 @@
+
+"use client"
+
 import { SidebarProvider, Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/app/admin/sidebar";
+import withAuth from "@/components/app/shared/with-auth";
 
-export default function AdminLayout({
+function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -15,3 +19,5 @@ export default function AdminLayout({
     </SidebarProvider>
   );
 }
+
+export default withAuth(AdminLayout);

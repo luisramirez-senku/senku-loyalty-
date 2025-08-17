@@ -25,6 +25,8 @@ import {
   Sparkles,
 } from "lucide-react";
 import Logo from "@/components/app/shared/logo";
+import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
 
 const menuItems = [
   { href: "/admin", label: "Panel", icon: BarChart2 },
@@ -39,6 +41,13 @@ const menuItems = [
 
 export function AdminSidebar() {
   const pathname = usePathname();
+  const { logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
 
   return (
     <>
@@ -77,11 +86,9 @@ export function AdminSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Cerrar sesión">
-              <Link href="/">
+            <SidebarMenuButton onClick={handleLogout} tooltip="Cerrar sesión">
                 <LogOut />
                 <span>Cerrar sesión</span>
-              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

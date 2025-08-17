@@ -1,6 +1,9 @@
-import AppHeader from "@/components/app/shared/header";
 
-export default function CustomerLayout({
+"use client";
+import AppHeader from "@/components/app/shared/header";
+import withAuth from "@/components/app/shared/with-auth";
+
+function CustomerLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -12,3 +15,6 @@ export default function CustomerLayout({
     </div>
   );
 }
+
+// Applying HOC for auth protection
+export default withAuth(CustomerLayout);

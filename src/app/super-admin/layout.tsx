@@ -1,7 +1,11 @@
+
+"use client";
+
 import { SidebarProvider, Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { SuperAdminSidebar } from "@/components/app/super-admin/sidebar";
+import withAuth from "@/components/app/shared/with-auth";
 
-export default function SuperAdminLayout({
+function SuperAdminLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -15,3 +19,5 @@ export default function SuperAdminLayout({
     </SidebarProvider>
   );
 }
+
+export default withAuth(SuperAdminLayout);

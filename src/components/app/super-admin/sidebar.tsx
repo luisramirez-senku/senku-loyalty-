@@ -20,6 +20,8 @@ import {
   LifeBuoy,
 } from "lucide-react";
 import Logo from "@/components/app/shared/logo";
+import { useAuth } from "@/hooks/use-auth";
+import { useRouter } from "next/navigation";
 
 const menuItems = [
   { href: "/super-admin", label: "Panel", icon: AreaChart },
@@ -29,6 +31,13 @@ const menuItems = [
 
 export function SuperAdminSidebar() {
   const pathname = usePathname();
+  const { logout } = useAuth();
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
 
   return (
     <>
@@ -67,11 +76,9 @@ export function SuperAdminSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton asChild tooltip="Cerrar sesión">
-              <Link href="/">
+            <SidebarMenuButton onClick={handleLogout} tooltip="Cerrar sesión">
                 <LogOut />
                 <span>Cerrar sesión</span>
-              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

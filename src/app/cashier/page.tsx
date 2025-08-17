@@ -1,7 +1,11 @@
+
+"use client";
+
 import AppHeader from "@/components/app/shared/header";
 import CashierView from "@/components/app/cashier/cashier-view";
+import withAuth from "@/components/app/shared/with-auth";
 
-export default function CashierPage() {
+function CashierPage() {
   return (
     <div className="flex min-h-screen w-full flex-col">
       <AppHeader />
@@ -11,3 +15,5 @@ export default function CashierPage() {
     </div>
   );
 }
+
+export default withAuth(CashierPage);
