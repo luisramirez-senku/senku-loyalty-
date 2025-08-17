@@ -11,10 +11,11 @@ import {
   CardFooter
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CreditCard, DollarSign, Link as LinkIcon, Percent, QrCode, Star, Users } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Gift, Link as LinkIcon, Percent, QrCode, ShoppingBag, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 // Extiende el tipo Program para incluir los detalles que podríamos tener.
 interface ProgramDetailsProps {
@@ -47,6 +48,21 @@ const TypeIcon = ({ type }: { type: string }) => {
             return null;
     }
 }
+
+const recentMembers = [
+    { name: "Liam Johnson", initials: "LJ" },
+    { name: "Olivia Smith", initials: "OS" },
+    { name: "Noah Williams", initials: "NW" },
+    { name: "Emma Brown", initials: "EB" },
+    { name: "Ava Jones", initials: "AJ" },
+];
+
+const recentTransactions = [
+    { name: "Liam Johnson", description: "Compra de $15", points: 150, icon: <ShoppingBag className="h-5 w-5 text-muted-foreground" /> },
+    { name: "Emma Brown", description: "Canje de recompensa", points: -2500, icon: <Gift className="h-5 w-5 text-muted-foreground" /> },
+    { name: "Olivia Smith", description: "Compra de $8", points: 80, icon: <ShoppingBag className="h-5 w-5 text-muted-foreground" /> },
+    { name: "Noah Williams", description: "Bono de registro", points: 100, icon: <Star className="h-5 w-5 text-muted-foreground" /> },
+];
 
 
 export default function ProgramDetails({ program }: ProgramDetailsProps) {
@@ -169,6 +185,51 @@ export default function ProgramDetails({ program }: ProgramDetailsProps) {
                 </div>
             </CardContent>
         </Card>
+
+        <Card className="lg:col-span-2">
+            <CardHeader>
+                <CardTitle>Últimas Transacciones</CardTitle>
+                <CardDescription>Actividad reciente en este programa.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {recentTransactions.map((tx, index) => (
+                    <div key={index} className="flex items-center gap-4">
+                        <Avatar className="h-10 w-10 border">
+                            <AvatarFallback>{tx.icon}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                            <p className="text-sm font-medium">{tx.name}</p>
+                            <p className="text-sm text-muted-foreground">{tx.description}</p>
+                        </div>
+                        <Badge variant={tx.points > 0 ? 'default' : 'destructive'}>
+                            {tx.points > 0 ? `+${tx.points}` : tx.points}
+                        </Badge>
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle>Miembros Recientes</CardTitle>
+                 <CardDescription>Nuevos clientes en este programa.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {recentMembers.map((member, index) => (
+                     <div key={index} className="flex items-center gap-4">
+                        <Avatar className="h-10 w-10">
+                            <AvatarImage src={`https://placehold.co/40x40.png?text=${member.initials}`} alt={member.name} />
+                            <AvatarFallback>{member.initials}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-medium text-sm">{member.name}</p>
+                            <p className="text-xs text-muted-foreground">Se unió hoy</p>
+                        </div>
+                    </div>
+                ))}
+            </CardContent>
+        </Card>
+
       </div>
     </div>
   );
