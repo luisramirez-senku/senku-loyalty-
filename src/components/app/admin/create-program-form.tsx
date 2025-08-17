@@ -62,8 +62,8 @@ const formSchema = z.object({
   logoImage: z.any().optional(),
   iconImage: z.any().optional(),
   stripImage: z.any().optional(),
-  stampIconActive: z.any().optional(),
-  stampIconInactive: z.any().optional(),
+  stampIconActiveColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
+  stampIconInactiveColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
 
   barcodeType: z.string().min(1, "El tipo de código de barras es requerido."),
 });
@@ -83,6 +83,8 @@ export default function CreateProgramForm() {
             foregroundColor: "#ffffff",
             backgroundColor: "#000000",
             labelColor: "#ffffff",
+            stampIconActiveColor: "#000000",
+            stampIconInactiveColor: "#dddddd",
             barcodeType: "PKBarcodeFormatQR",
         },
       });
@@ -274,30 +276,29 @@ export default function CreateProgramForm() {
                                             </FormItem>
                                         )}
                                     />
+                                    <div />
                                     <FormField
                                         control={form.control}
-                                        name="stampIconActive"
+                                        name="stampIconActiveColor"
                                         render={({ field }) => (
                                             <FormItem>
-                                            <FormLabel>Ícono de Sello Activo</FormLabel>
+                                            <FormLabel>Color del Sello Activo</FormLabel>
                                             <FormControl>
-                                                <Input type="file" accept="image/png" onChange={(e) => field.onChange(e.target.files)} />
+                                                <Input type="color" {...field} />
                                             </FormControl>
-                                            <FormDescription>PNG (60x60px rec.).</FormDescription>
                                             <FormMessage />
                                             </FormItem>
                                         )}
                                     />
                                     <FormField
                                         control={form.control}
-                                        name="stampIconInactive"
+                                        name="stampIconInactiveColor"
                                         render={({ field }) => (
                                             <FormItem>
-                                            <FormLabel>Ícono de Sello Inactivo</FormLabel>
+                                            <FormLabel>Color del Sello Inactivo</FormLabel>
                                             <FormControl>
-                                                <Input type="file" accept="image/png" onChange={(e) => field.onChange(e.target.files)} />
+                                                <Input type="color" {...field} />
                                             </FormControl>
-                                            <FormDescription>PNG (60x60px rec.).</FormDescription>
                                             <FormMessage />
                                             </FormItem>
                                         )}
@@ -474,3 +475,5 @@ export default function CreateProgramForm() {
     </div>
   );
 }
+
+    
