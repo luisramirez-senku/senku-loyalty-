@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Star, CalendarDays, Users, Calendar as CalendarIcon, FilterX, Info, Edit, History, Trash2 } from "lucide-react";
+import { PlusCircle, Star, CalendarDays, Users, Calendar as CalendarIcon, FilterX, Info, Edit, History, Trash2 } from "lucide-react";
 import {
     Select,
     SelectContent,
@@ -26,36 +26,75 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { DeleteCustomerDialog } from "./delete-customer-dialog";
+import { EditCustomerDialog } from "./edit-customer-dialog";
+import { ViewHistoryDialog } from "./view-history-dialog";
 
-const customers = [
+// Tipos de datos
+export type Customer = {
+    id: string;
+    name: string;
+    email: string;
+    tier: "Oro" | "Plata" | "Bronce";
+    points: number;
+    segment: "Alto valor" | "Comprador frecuente" | "Nuevo miembro" | "VIP" | "En riesgo";
+    joined: string;
+    initials: string;
+    history?: Transaction[];
+};
+
+export type Transaction = {
+    id: string;
+    date: string;
+    description: string;
+    points: number;
+};
+
+const customersData: Customer[] = [
   {
+    id: "cust_1",
     name: "Liam Johnson",
     email: "liam@example.com",
     tier: "Oro",
     points: 12500,
     segment: "Alto valor",
     joined: "2023-10-18",
-    initials: "LJ"
+    initials: "LJ",
+    history: [
+        { id: "t1", date: "2024-05-20", description: "Compra en tienda", points: 150 },
+        { id: "t2", date: "2024-05-15", description: "Canje de recompensa: Café gratis", points: -500 },
+        { id: "t3", date: "2024-05-01", description: "Bono de cumpleaños", points: 1000 },
+    ]
   },
   {
+    id: "cust_2",
     name: "Olivia Smith",
     email: "olivia@example.com",
     tier: "Plata",
     points: 7200,
     segment: "Comprador frecuente",
     joined: "2023-11-05",
-    initials: "OS"
+    initials: "OS",
+    history: [
+        { id: "t4", date: "2024-05-18", description: "Compra en tienda", points: 80 },
+        { id: "t5", date: "2024-05-11", description: "Compra online", points: 120 },
+    ]
   },
   {
+    id: "cust_3",
     name: "Noah Williams",
     email: "noah@example.com",
     tier: "Bronce",
     points: 1500,
     segment: "Nuevo miembro",
     joined: "2024-03-15",
-    initials: "NW"
+    initials: "NW",
+    history: [
+        { id: "t6", date: "2024-03-15", description: "Registro en programa", points: 100 },
+    ]
   },
   {
+    id: "cust_4",
     name: "Emma Brown",
     email: "emma@example.com",
     tier: "Oro",
@@ -65,6 +104,7 @@ const customers = [
     initials: "EB"
   },
   {
+    id: "cust_5",
     name: "Ava Jones",
     email: "ava@example.com",
     tier: "Plata",
@@ -75,9 +115,9 @@ const customers = [
   },
 ];
 
-const customerSegments = ["Alto valor", "Comprador frecuente", "Nuevo miembro", "VIP", "En riesgo"];
+export const customerSegments = ["Alto valor", "Comprador frecuente", "Nuevo miembro", "VIP", "En riesgo"];
 
-const segmentDescriptions: Record<string, string> = {
+export const segmentDescriptions: Record<string, string> = {
     "Alto valor": "Clientes que gastan significativamente más que el promedio.",
     "Comprador frecuente": "Clientes que realizan compras de forma regular.",
     "Nuevo miembro": "Clientes que se han unido recientemente al programa de lealtad.",
@@ -87,9 +127,46 @@ const segmentDescriptions: Record<string, string> = {
 
 
 export default function CustomerManagement() {
-    const [filteredCustomers, setFilteredCustomers] = useState(customers);
+    const [customers, setCustomers] = useState<Customer[]>(customersData);
+    const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>(customersData);
+    
     const [segmentFilter, setSegmentFilter] = useState<string>("");
     const [dateFilter, setDateFilter] = useState<DateRange | undefined>(undefined);
+
+    const [isEditOpen, setEditOpen] = useState(false);
+    const [isHistoryOpen, setHistoryOpen] = useState(false);
+    const [isDeleteOpen, setDeleteOpen] = useState(false);
+    const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+
+    const handleEdit = (customer: Customer) => {
+        setSelectedCustomer(customer);
+        setEditOpen(true);
+    }
+    const handleHistory = (customer: Customer) => {
+        setSelectedCustomer(customer);
+        setHistoryOpen(true);
+    }
+    const handleDelete = (customer: Customer) => {
+        setSelectedCustomer(customer);
+        setDeleteOpen(true);
+    }
+
+    const onCustomerUpdate = (updatedCustomer: Customer) => {
+        const updatedList = customers.map(c => c.id === updatedCustomer.id ? updatedCustomer : c);
+        setCustomers(updatedList);
+        // También actualizamos la lista filtrada para reflejar el cambio inmediatamente
+        const updatedFilteredList = filteredCustomers.map(c => c.id === updatedCustomer.id ? updatedCustomer : c);
+        setFilteredCustomers(updatedFilteredList);
+        setEditOpen(false);
+    };
+
+    const onCustomerDelete = (customerId: string) => {
+        const updatedList = customers.filter(c => c.id !== customerId);
+        setCustomers(updatedList);
+        const updatedFilteredList = filteredCustomers.filter(c => c.id !== customerId);
+        setFilteredCustomers(updatedFilteredList);
+        setDeleteOpen(false);
+    }
 
     const applyFilters = (segment: string, dateRange?: DateRange) => {
         let updatedCustomers = customers;
@@ -129,6 +206,7 @@ export default function CustomerManagement() {
     }
 
   return (
+    <>
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <div>
@@ -203,8 +281,8 @@ export default function CustomerManagement() {
 
     <TooltipProvider>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filteredCustomers.map((customer, index) => (
-            <Card key={index} className="flex flex-col">
+        {filteredCustomers.map((customer) => (
+            <Card key={customer.id} className="flex flex-col">
                 <CardHeader>
                     <div className="flex items-center gap-4">
                         <Avatar className="h-12 w-12" data-ai-hint="person portrait">
@@ -246,17 +324,17 @@ export default function CustomerManagement() {
                 </CardContent>
                 <CardFooter className="border-t pt-4">
                     <div className="flex w-full justify-center gap-2">
-                        <Button variant="outline" size="sm" className="flex-1">
+                        <Button variant="outline" size="sm" className="flex-1" onClick={() => handleEdit(customer)}>
                             <Edit className="h-4 w-4 md:mr-2" />
                             <span className="hidden md:inline">Editar</span>
                         </Button>
-                        <Button variant="outline" size="sm" className="flex-1">
+                        <Button variant="outline" size="sm" className="flex-1" onClick={() => handleHistory(customer)}>
                            <History className="h-4 w-4 md:mr-2" />
                            <span className="hidden md:inline">Historial</span>
                         </Button>
                          <Tooltip>
                             <TooltipTrigger asChild>
-                                <Button variant="destructive" size="icon">
+                                <Button variant="destructive" size="icon" onClick={() => handleDelete(customer)}>
                                     <Trash2 className="h-4 w-4" />
                                     <span className="sr-only">Eliminar</span>
                                 </Button>
@@ -277,5 +355,29 @@ export default function CustomerManagement() {
           </div>
       )}
     </div>
+
+    {/* Dialogs */}
+    {selectedCustomer && (
+        <>
+            <EditCustomerDialog 
+                isOpen={isEditOpen} 
+                setIsOpen={setEditOpen} 
+                customer={selectedCustomer}
+                onCustomerUpdate={onCustomerUpdate}
+            />
+            <ViewHistoryDialog 
+                isOpen={isHistoryOpen} 
+                setIsOpen={setHistoryOpen} 
+                customer={selectedCustomer}
+            />
+            <DeleteCustomerDialog
+                isOpen={isDeleteOpen}
+                setIsOpen={setDeleteOpen}
+                customer={selectedCustomer}
+                onCustomerDelete={onCustomerDelete}
+            />
+        </>
+    )}
+    </>
   );
 }
