@@ -18,6 +18,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
+    // The lang prop is managed by the [locale] layout
     <html lang="es" suppressHydrationWarning>
        <head>
           <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css"/>
