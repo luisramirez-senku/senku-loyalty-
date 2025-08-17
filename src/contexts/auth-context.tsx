@@ -61,14 +61,6 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-let auth: Auth;
-try {
-  auth = getAuth(app);
-} catch (error) {
-  console.error("Error initializing Firebase Auth:", error);
-}
-
-
 // Function to seed data for a new user
 const seedInitialData = async (userId: string, userName: string, userEmail: string) => {
     const batch = writeBatch(db);
@@ -118,6 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const auth = getAuth(app);
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -127,10 +120,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (email: string, pass: string) => {
+    const auth = getAuth(app);
     return signInWithEmailAndPassword(auth, email, pass);
   };
 
   const signup = async (email: string, pass: string, name: string) => {
+    const auth = getAuth(app);
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     if (userCredential.user) {
         // After user is created in Auth, seed their Firestore data
@@ -140,6 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
+    const auth = getAuth(app);
     return signOut(auth);
   };
 
@@ -151,7 +147,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
   };
 
-  if (loading || !auth) {
+  if (loading) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
             <Loader className="h-8 w-8 animate-spin" />
