@@ -18,36 +18,97 @@ import { db } from "@/lib/firebase/client";
 import { doc, getDoc } from "firebase/firestore";
 import type { Customer } from "@/components/app/admin/customer-management";
 import { Skeleton } from "@/components/ui/skeleton";
+import { generateWalletPass } from "@/ai/flows/generate-wallet-pass";
+import { useToast } from "@/hooks/use-toast";
+import type { Program } from "@/components/app/admin/program-management";
 
 // Para la demo, obtenemos un cliente específico. En una app real, esto vendría de la sesión del usuario.
 const CUSTOMER_ID_DEMO = "bAsz8Nn9EaN5Sg2v3j0K";
 
 export default function LoyaltyCard() {
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [program, setProgram] = useState<Program | null>(null);
   const [loading, setLoading] = useState(true);
+  const [passLoading, setPassLoading] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchCustomer = async () => {
+    const fetchCustomerData = async () => {
       if (!CUSTOMER_ID_DEMO) {
           setLoading(false);
           return;
       }
       try {
-        const docRef = doc(db, "customers", CUSTOMER_ID_DEMO);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          setCustomer({ id: docSnap.id, ...docSnap.data() } as Customer);
+        const customerRef = doc(db, "customers", CUSTOMER_ID_DEMO);
+        const customerSnap = await getDoc(customerRef);
+        
+        if (customerSnap.exists()) {
+          const customerData = { id: customerSnap.id, ...customerSnap.data() } as Customer;
+          setCustomer(customerData);
+
+          // Suponiendo que el customer tiene un programId. En una app real, esto estaría definido.
+          const programId = (customerData as any).programId || "defaultProgram"; 
+          
+          const programRef = doc(db, "programs", "C9Lh2V7aCq3v8xY5kF2w"); // Hardcoded para la demo
+          const programSnap = await getDoc(programRef);
+          if (programSnap.exists()) {
+            setProgram({ id: programSnap.id, ...programSnap.data() } as Program);
+          } else {
+             // Fallback program
+             setProgram({ id: 'fallback', name: 'Programa de Lealtad', type: 'Puntos', status: 'Activo', members: 0, created: '' });
+          }
+
         } else {
           console.log("No such customer!");
         }
       } catch (error) {
-        console.error("Error fetching customer:", error);
+        console.error("Error fetching customer data:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchCustomer();
+    fetchCustomerData();
   }, []);
+
+  const handleAddToWallet = async (walletType: 'google' | 'apple') => {
+    if (!customer || !program) return;
+    setPassLoading(true);
+
+    if (walletType === 'apple') {
+        toast({ title: "Próximamente", description: "La integración con Apple Wallet estará disponible pronto."});
+        setPassLoading(false);
+        return;
+    }
+
+    try {
+        const result = await generateWalletPass({
+            customerId: customer.id,
+            customerName: customer.name,
+            customerPoints: customer.points,
+            customerTier: customer.tier,
+            programName: program.name,
+            // Valores de diseño simulados. En una app real, vendrían del `program.design`.
+            logoText: (program as any).design?.logoText || "Senku Lealtad",
+            backgroundColor: (program as any).design?.backgroundColor || "#2962FF",
+            foregroundColor: (program as any).design?.foregroundColor || "#FFFFFF",
+        });
+
+        if (result.saveUrl) {
+            window.open(result.saveUrl, '_blank');
+        }
+
+    } catch (error) {
+        console.error('Error generating wallet pass:', error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "No se pudo generar el pase de Wallet. Inténtalo de nuevo."
+        });
+    } finally {
+        setPassLoading(false);
+    }
+  }
+
 
   if (loading) {
     return (
@@ -108,12 +169,12 @@ export default function LoyaltyCard() {
         </div>
       </div>
       <CardFooter className="bg-background/80 backdrop-blur-sm p-4 flex flex-col sm:flex-row gap-2">
-        <Button className="w-full">
-            <Image src="/apple-wallet.svg" alt="Apple Wallet" width={24} height={24} className="mr-2" />
+        <Button className="w-full" onClick={() => handleAddToWallet('apple')} disabled={passLoading}>
+            {passLoading ? <Loader className="mr-2 h-4 w-4 animate-spin"/> : <Image src="/apple-wallet.svg" alt="Apple Wallet" width={24} height={24} className="mr-2" />}
             Añadir a Apple Wallet
         </Button>
-        <Button className="w-full" variant="outline">
-            <Image src="/google-wallet.svg" alt="Google Wallet" width={24} height={24} className="mr-2" />
+        <Button className="w-full" variant="outline" onClick={() => handleAddToWallet('google')} disabled={passLoading}>
+            {passLoading ? <Loader className="mr-2 h-4 w-4 animate-spin"/> : <Image src="/google-wallet.svg" alt="Google Wallet" width={24} height={24} className="mr-2" />}
             Añadir a Google Wallet
         </Button>
       </CardFooter>
