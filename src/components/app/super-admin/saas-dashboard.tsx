@@ -104,44 +104,40 @@ export default function SaasDashboard() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Crecimiento de Clientes</CardTitle>
-            <CardDescription>Nuevos clientes registrados por mes.</CardDescription>
-          </CardHeader>
-          <CardContent className="pl-2">
-            <ChartContainer config={chartConfig} className="h-[350px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={chartData}>
-                  <CartesianGrid vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    tickMargin={10}
-                    axisLine={false}
-                    tickFormatter={(value) => value.slice(0, 3)}
-                  />
-                  <YAxis />
-                  <ChartTooltip
-                    cursor={false}
-                    content={<ChartTooltipContent />}
-                  />
-                  <ChartLegend content={<ChartLegendContent />} />
-                  <Bar
-                    dataKey="tenants"
-                    fill="var(--color-tenants)"
-                    radius={4}
-                  />
-                </ComposedChart>
-              </ResponsiveContainer>
-            </ChartContainer>
-          </CardContent>
-        </Card>
-        <div className="col-span-4 md:col-span-3">
-             <TenantManagement />
-        </div>
-      </div>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Crecimiento de Clientes</CardTitle>
+          <CardDescription>Nuevos clientes registrados por mes.</CardDescription>
+        </CardHeader>
+        <CardContent className="pl-2">
+          <ChartContainer config={chartConfig} className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={chartData}>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="month"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                  tickFormatter={(value) => value.slice(0, 3)}
+                />
+                <YAxis />
+                <ChartTooltip
+                  cursor={false}
+                  content={<ChartTooltipContent />}
+                />
+                <ChartLegend content={<ChartLegendContent />} />
+                <Bar
+                  dataKey="tenants"
+                  fill="var(--color-tenants)"
+                  radius={4}
+                />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </ChartContainer>
+        </CardContent>
+      </Card>
     </div>
   );
 }
