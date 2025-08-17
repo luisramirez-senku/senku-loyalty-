@@ -88,7 +88,7 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
   }, [customerId]);
 
   const handleAddToWallet = async (walletType: 'google' | 'apple') => {
-    if (!customer || !program) return;
+    if (!customer || !program || !tenantId) return;
     setPassLoading(true);
 
     if (walletType === 'apple') {
@@ -105,6 +105,8 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
+                tenantId: tenantId,
+                programId: program.id,
                 customerId: customer.id,
                 customerName: customer.name,
                 customerPoints: customer.points,
@@ -212,3 +214,5 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
     </Card>
   );
 }
+
+    

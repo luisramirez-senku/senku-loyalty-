@@ -1,3 +1,4 @@
+
 /**
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
@@ -19,10 +20,6 @@ setGlobalOptions({region: "us-central1"});
 // You can find this in the Google Wallet API console after creating an issuer account.
 const ISSUER_ID = "3388000000022316666"; // <<<--- REPLACE WITH YOUR ISSUER ID
 
-// This should be a class you have pre-created via the Google Wallet API.
-// It defines the template for your loyalty cards.
-const LOYALTY_CLASS_ID = "LOYALTY_CLASS_ID_PLACEHOLDER"; // <<<--- REPLACE WITH YOUR CLASS ID
-
 
 export const generateWalletPass = onRequest(
   {cors: true}, // Enable CORS for client-side requests
@@ -35,8 +32,7 @@ export const generateWalletPass = onRequest(
     // To get credentials for this function, you must:
     //   a. Create a Service Account in your Google Cloud Project (IAM & Admin -> Service Accounts).
     //   b. Go to the Google Pay & Wallet Console (https://pay.google.com/business/console).
-    //   c. Go to the "Users" section and invite your new Service Account's email address.
-    // This grants the service account permission to act as an issuer. There is no IAM Role for this.
+    //   c. Go to the "Users" section and invite your new Service Account's email address. This grants the service account permission.
     const auth = new GoogleAuth({
       scopes: ["https://www.googleapis.com/auth/wallet_object.issuer"],
     });
@@ -44,6 +40,8 @@ export const generateWalletPass = onRequest(
 
     // 2. Validate Input
     const {
+      tenantId,
+      programId,
       customerId,
       customerName,
       customerPoints,
@@ -54,18 +52,38 @@ export const generateWalletPass = onRequest(
       foregroundColor,
     } = request.body;
 
-    if (!customerId || !customerName || customerPoints === undefined) {
+    if (!tenantId || !programId || !customerId || !customerName || customerPoints === undefined) {
       logger.error("Missing required fields in request body");
       response.status(400).send("Missing required fields.");
       return;
     }
+    
+    // 3. Get Loyalty Class ID from the program document in Firestore
+    let loyaltyClassId;
+    try {
+        const programRef = db.collection("tenants").doc(tenantId).collection("programs").doc(programId);
+        const programSnap = await programRef.get();
+        if (!programSnap.exists) {
+            throw new Error(`Program ${programId} not found for tenant ${tenantId}.`);
+        }
+        const programData = programSnap.data();
+        if (!programData?.design?.walletClassId) {
+            throw new Error(`walletClassId not found in program ${programId}.`);
+        }
+        loyaltyClassId = programData.design.walletClassId;
+    } catch(error) {
+        logger.error("Error fetching program details:", error);
+        response.status(500).send("Error fetching program configuration.");
+        return;
+    }
 
-    // 3. Create the Loyalty Object Payload
+
+    // 4. Create the Loyalty Object Payload
     const loyaltyObjectId = `${ISSUER_ID}.${uuidv4()}`;
 
     const loyaltyObject = {
       id: loyaltyObjectId,
-      classId: `${ISSUER_ID}.${LOYALTY_CLASS_ID}`, // Class ID must be namespaced with Issuer ID
+      classId: `${ISSUER_ID}.${loyaltyClassId}`, // Class ID is now dynamic
       state: "active",
       heroImage: {
         sourceUri: {
@@ -130,7 +148,7 @@ export const generateWalletPass = onRequest(
       hexFontColor: foregroundColor,
     };
 
-    // 4. Create the JWT for the "Save to Wallet" button
+    // 5. Create the JWT for the "Save to Wallet" button
     const claims = {
       iss: authClient.email,
       aud: "google",
@@ -148,7 +166,7 @@ export const generateWalletPass = onRequest(
       const token = await authClient.sign(claims);
       logger.info("JWT successfully created.");
 
-      // 5. Send the signed JWT to the client
+      // 6. Send the signed JWT to the client
       response.json({
         saveUrl: `https://pay.google.com/gp/v/save/${token}`,
       });
@@ -276,3 +294,5 @@ export const paypalWebhookHandler = onRequest(async (request, response) => {
     response.status(500).send("Internal Server Error");
   }
 });
+
+    

@@ -58,6 +58,7 @@ const formSchema = z.object({
   cashbackPercentage: z.coerce.number().optional(),
 
   // Wallet Pass Fields
+  walletClassId: z.string().min(1, "El ID de la Clase de Wallet es requerido."),
   logoText: z.string().optional(),
   foregroundColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
   backgroundColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
@@ -89,6 +90,7 @@ export default function CreateProgramForm() {
             backgroundColor: "#000000",
             labelColor: "#ffffff",
             barcodeType: "PKBarcodeFormatQR",
+            walletClassId: "",
         },
       });
     
@@ -116,6 +118,7 @@ export default function CreateProgramForm() {
                     cashbackPercentage: values.cashbackPercentage || null,
                 },
                 design: {
+                    walletClassId: values.walletClassId,
                     logoText: values.issuerName,
                     backgroundColor: values.backgroundColor,
                     foregroundColor: values.foregroundColor,
@@ -357,6 +360,20 @@ export default function CreateProgramForm() {
                         <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             <FormField
                                 control={form.control}
+                                name="walletClassId"
+                                render={({ field }) => (
+                                    <FormItem className="lg:col-span-3">
+                                    <FormLabel>ID de la Clase de Wallet</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="ID de la clase de Google Wallet" {...field} />
+                                    </FormControl>
+                                    <FormDescription>Este ID se obtiene al crear la clase de lealtad en la consola de Google.</FormDescription>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <FormField
+                                control={form.control}
                                 name="logoText"
                                 render={({ field }) => (
                                     <FormItem>
@@ -492,3 +509,5 @@ export default function CreateProgramForm() {
     </div>
   );
 }
+
+    
