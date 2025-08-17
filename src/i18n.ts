@@ -4,6 +4,8 @@ import {notFound} from 'next/navigation';
  
 // Can be imported from a shared config
 export const locales = ['en', 'es', 'fr'];
+
+export const pathnames = {} as const;
  
 export default getRequestConfig(async ({locale}) => {
   // Validate that the incoming `locale` parameter is valid
@@ -13,3 +15,4 @@ export default getRequestConfig(async ({locale}) => {
     messages: (await import(`./messages/${locale}.json`)).default
   };
 });
+
