@@ -1,8 +1,9 @@
 
-
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -24,6 +25,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { toast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type ProgramStatus = "Activo" | "Borrador" | "Archivado";
 
@@ -35,49 +38,6 @@ export type Program = {
     members: number;
     created: string;
 };
-
-const initialPrograms: Program[] = [
-  {
-    id: "prog_1",
-    name: "Programa de Puntos Premium",
-    type: "Puntos",
-    status: "Activo",
-    members: 8234,
-    created: "2023-01-15",
-  },
-  {
-    id: "prog_2",
-    name: "Tarjeta de sellos de café",
-    type: "Sellos",
-    status: "Activo",
-    members: 4512,
-    created: "2023-06-01",
-  },
-  {
-    id: "prog_3",
-    name: "Recompensas VIP de Cashback",
-    type: "Cashback",
-    status: "Activo",
-    members: 1024,
-    created: "2022-11-20",
-  },
-  {
-    id: "prog_4",
-    name: "Promociones de verano",
-    type: "Puntos",
-    status: "Borrador",
-    members: 0,
-    created: "2024-05-10",
-  },
-  {
-    id: "prog_5",
-    name: "Estampida de vacaciones",
-    type: "Sellos",
-    status: "Archivado",
-    members: 7890,
-    created: "2022-12-01",
-  },
-];
 
 const TypeIcon = ({ type }: { type: string }) => {
     switch (type) {
@@ -93,12 +53,47 @@ const TypeIcon = ({ type }: { type: string }) => {
 }
 
 export default function ProgramManagement() {
-  const [programs, setPrograms] = useState<Program[]>(initialPrograms);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleUpdateStatus = (programId: string, status: ProgramStatus) => {
-    setPrograms(programs.map(p => p.id === programId ? { ...p, status } : p));
+  useEffect(() => {
+    const fetchPrograms = async () => {
+      try {
+        const querySnapshot = await getDocs(collection(db, "programs"));
+        const programsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Program));
+        setPrograms(programsData);
+      } catch (error) {
+        console.error("Error al obtener los programas: ", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No se pudieron cargar los programas desde la base de datos.",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPrograms();
+  }, []);
+
+  const handleUpdateStatus = async (programId: string, status: ProgramStatus) => {
+    try {
+      const programRef = doc(db, "programs", programId);
+      await updateDoc(programRef, { status });
+      setPrograms(programs.map(p => p.id === programId ? { ...p, status } : p));
+      toast({
+        title: "Programa Actualizado",
+        description: `El estado del programa ha sido cambiado a ${status}.`,
+      });
+    } catch (error) {
+      console.error("Error al actualizar el programa: ", error);
+       toast({
+          variant: "destructive",
+          title: "Error",
+          description: "No se pudo actualizar el estado del programa.",
+        });
+    }
   };
-
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
@@ -117,68 +112,87 @@ export default function ProgramManagement() {
       </div>
       <TooltipProvider>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {programs.map((program) => (
-          <Card key={program.id} className="flex flex-col">
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <CardTitle>{program.name}</CardTitle>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                    <Button aria-haspopup="true" size="icon" variant="ghost">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Menú de palanca</span>
-                    </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                            <Link href="/admin/programs/new">Editar</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                            <Link href={`/admin/programs/${program.id}`}>Ver detalles</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        {program.status !== 'Archivado' ? (
-                            <DropdownMenuItem onClick={() => handleUpdateStatus(program.id, 'Archivado')}>
-                                <Archive className="mr-2 h-4 w-4" />
-                                Archivar
+        {loading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i}>
+                    <CardHeader>
+                        <Skeleton className="h-6 w-3/4" />
+                        <Skeleton className="h-4 w-1/4" />
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <Skeleton className="h-5 w-20" />
+                        <Skeleton className="h-4 w-1/2" />
+                    </CardContent>
+                    <CardFooter className="flex-col items-start gap-2 pt-4 border-t">
+                        <Skeleton className="h-4 w-1/2" />
+                        <Skeleton className="h-3 w-1/3" />
+                    </CardFooter>
+                </Card>
+            ))
+        ) : (
+            programs.map((program) => (
+            <Card key={program.id} className="flex flex-col">
+                <CardHeader>
+                <div className="flex justify-between items-start">
+                    <CardTitle>{program.name}</CardTitle>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Menú de palanca</span>
+                        </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuItem asChild>
+                                <Link href="/admin/programs/new">Editar</Link>
                             </DropdownMenuItem>
-                        ) : (
-                            <DropdownMenuItem onClick={() => handleUpdateStatus(program.id, 'Activo')}>
-                                <ArchiveRestore className="mr-2 h-4 w-4" />
-                                Restaurar
+                            <DropdownMenuItem asChild>
+                                <Link href={`/admin/programs/${program.id}`}>Ver detalles</Link>
                             </DropdownMenuItem>
-                        )}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-              <CardDescription asChild>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <TypeIcon type={program.type} />
-                    <span>{program.type}</span>
+                            <DropdownMenuSeparator />
+                            {program.status !== 'Archivado' ? (
+                                <DropdownMenuItem onClick={() => handleUpdateStatus(program.id, 'Archivado')}>
+                                    <Archive className="mr-2 h-4 w-4" />
+                                    Archivar
+                                </DropdownMenuItem>
+                            ) : (
+                                <DropdownMenuItem onClick={() => handleUpdateStatus(program.id, 'Activo')}>
+                                    <ArchiveRestore className="mr-2 h-4 w-4" />
+                                    Restaurar
+                                </DropdownMenuItem>
+                            )}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex-1 space-y-4">
-               <Badge variant={program.status === 'Activo' ? 'default' : program.status === 'Borrador' ? 'outline' : 'secondary'}>{program.status}</Badge>
-               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Users className="h-4 w-4" />
-                    <span>{program.members.toLocaleString()} miembros</span>
-               </div>
-            </CardContent>
-            <CardFooter className="flex-col items-start gap-2 pt-4 border-t">
-                <Link href={`/register/${program.id}`} passHref>
-                    <Button variant="link" className="p-0 h-auto">
-                        <LinkIcon className="h-4 w-4 mr-2" />
-                        Enlace de registro
-                    </Button>
-                </Link>
-                <p className="text-xs text-muted-foreground">
-                    Creado el {program.created}
-                </p>
-            </CardFooter>
-          </Card>
-        ))}
+                <CardDescription>
+                    <div className="flex items-center gap-2 text-sm">
+                        <TypeIcon type={program.type} />
+                        <span>{program.type}</span>
+                    </div>
+                </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1 space-y-4">
+                <Badge variant={program.status === 'Activo' ? 'default' : program.status === 'Borrador' ? 'outline' : 'secondary'}>{program.status}</Badge>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Users className="h-4 w-4" />
+                        <span>{program.members.toLocaleString()} miembros</span>
+                </div>
+                </CardContent>
+                <CardFooter className="flex-col items-start gap-2 pt-4 border-t">
+                    <Link href={`/register/${program.id}`} passHref>
+                        <Button variant="link" className="p-0 h-auto">
+                            <LinkIcon className="h-4 w-4 mr-2" />
+                            Enlace de registro
+                        </Button>
+                    </Link>
+                    <p className="text-xs text-muted-foreground">
+                        Creado el {program.created}
+                    </p>
+                </CardFooter>
+            </Card>
+            ))
+        )}
       </div>
       </TooltipProvider>
     </div>
