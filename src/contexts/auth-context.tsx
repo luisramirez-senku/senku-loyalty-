@@ -30,12 +30,16 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 const createNewTenant = async (tenantId: string, businessName: string, adminEmail: string, signupData: Record<string, any>) => {
     const tenantRef = doc(db, "tenants", tenantId);
     
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + 14); // 14-day trial
+
     const tenantData = {
         name: businessName,
         ownerEmail: adminEmail,
         createdAt: new Date().toISOString(),
-        plan: "Trial", // Start every new user on a trial plan
-        status: "Activo",
+        plan: "Crecimiento",
+        status: "Prueba",
+        trialEnds: trialEndDate,
         // Store the survey and billing info
         survey: {
             industry: signupData.industry,
@@ -87,7 +91,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (email: string, pass: string, businessName: string, signupData: Record<string, any>) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     if (userCredential.user) {
-        // After user is created in Auth, create their clean tenant structure
         await createNewTenant(userCredential.user.uid, businessName, email, signupData);
     }
     return userCredential;

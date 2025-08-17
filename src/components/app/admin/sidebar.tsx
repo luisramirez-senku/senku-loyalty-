@@ -80,9 +80,11 @@ export function AdminSidebar() {
       <SidebarFooter className="p-2">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Configuración">
-              <Settings />
-              <span>Configuración</span>
+            <SidebarMenuButton asChild isActive={pathname === '/admin/settings'} tooltip="Configuración">
+              <Link href="/admin/settings">
+                <Settings />
+                <span>Configuración</span>
+              </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
