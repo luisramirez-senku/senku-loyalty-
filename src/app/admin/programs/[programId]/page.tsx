@@ -1,28 +1,28 @@
 
 import ProgramDetails from "@/components/app/admin/program-details";
+import { db } from "@/lib/firebase/client";
+import { doc, getDoc } from "firebase/firestore";
+import type { Program } from "@/components/app/admin/program-management";
 
-export default function ProgramDetailsPage({ params }: { params: { programId: string } }) {
-  // En una aplicación real, usarías el programId para obtener los datos del programa.
-  // Por ahora, pasaremos datos de ejemplo.
-  const program = {
-    id: params.programId,
-    name: "Programa de Puntos Premium",
-    type: "Puntos" as const,
-    status: "Activo" as const,
-    members: 8234,
-    created: "2023-01-15",
-    description: "Un programa de lealtad basado en puntos para recompensar a nuestros mejores clientes.",
-    rules: {
-        pointsPerAmount: 10,
-        amountForPoints: 1,
-    },
-    design: {
-        logoText: "Café Estelar",
-        backgroundColor: "#2E3A4D",
-        foregroundColor: "#FFFFFF",
-        labelColor: "#B0B7C1",
+async function getProgram(programId: string) {
+    const docRef = doc(db, "programs", programId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        return { id: docSnap.id, ...docSnap.data() } as Program;
+    } else {
+        // En una aplicación real, querrías manejar esto de manera más elegante (p.ej., página 404)
+        return null;
     }
-  };
+}
+
+
+export default async function ProgramDetailsPage({ params }: { params: { programId: string } }) {
+  const program = await getProgram(params.programId);
+  
+  if (!program) {
+    return <div className="p-8">Programa no encontrado.</div>
+  }
 
   return <ProgramDetails program={program} />;
 }
