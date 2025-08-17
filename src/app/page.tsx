@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { User, Shield, UserCircle } from "lucide-react";
+import { User, Shield, UserCircle, Gem } from "lucide-react";
 import Logo from "@/components/app/shared/logo";
 
 export default function Home() {
@@ -34,6 +34,12 @@ export default function Home() {
             <Button size="lg" className="w-full justify-start">
               <Shield className="mr-4" />
               Administrador
+            </Button>
+          </Link>
+           <Link href="/super-admin" passHref>
+            <Button size="lg" className="w-full justify-start" variant="outline">
+              <Gem className="mr-4" />
+              Super Admin
             </Button>
           </Link>
         </CardContent>
