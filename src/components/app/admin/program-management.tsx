@@ -26,7 +26,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 
 type ProgramStatus = "Activo" | "Borrador" | "Archivado";
 
-type Program = {
+export type Program = {
     id: string;
     name: string;
     type: "Puntos" | "Sellos" | "Cashback";
@@ -130,8 +130,12 @@ export default function ProgramManagement() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
-                        <DropdownMenuItem>Ver detalles</DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href="/admin/programs/new">Editar</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/admin/programs/${program.id}`}>Ver detalles</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         {program.status !== 'Archivado' ? (
                             <DropdownMenuItem onClick={() => handleUpdateStatus(program.id, 'Archivado')}>
