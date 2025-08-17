@@ -5,3 +5,8 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+  # The server action timeout is not configurable.
+
+# Required for genkit to work.
+# Pin the CPU to 1 to work around a bug in genkit.
+cpu: 1

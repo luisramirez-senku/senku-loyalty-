@@ -18,12 +18,12 @@ import { db } from "@/lib/firebase/client";
 import { doc, getDoc } from "firebase/firestore";
 import type { Customer } from "@/components/app/admin/customer-management";
 import { Skeleton } from "@/components/ui/skeleton";
-import { generateWalletPass } from "@/ai/flows/generate-wallet-pass";
 import { useToast } from "@/hooks/use-toast";
 import type { Program } from "@/components/app/admin/program-management";
 
 // Para la demo, obtenemos un cliente específico. En una app real, esto vendría de la sesión del usuario.
 const CUSTOMER_ID_DEMO = "bAsz8Nn9EaN5Sg2v3j0K";
+const WALLET_FUNCTION_URL = "https://us-central1-senku-loyalty.cloudfunctions.net/generateWalletPass";
 
 export default function LoyaltyCard() {
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -81,20 +81,34 @@ export default function LoyaltyCard() {
     }
 
     try {
-        const result = await generateWalletPass({
-            customerId: customer.id,
-            customerName: customer.name,
-            customerPoints: customer.points,
-            customerTier: customer.tier,
-            programName: program.name,
-            // Valores de diseño simulados. En una app real, vendrían del `program.design`.
-            logoText: (program as any).design?.logoText || "Senku Lealtad",
-            backgroundColor: (program as any).design?.backgroundColor || "#2962FF",
-            foregroundColor: (program as any).design?.foregroundColor || "#FFFFFF",
+        const response = await fetch(WALLET_FUNCTION_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                customerId: customer.id,
+                customerName: customer.name,
+                customerPoints: customer.points,
+                customerTier: customer.tier,
+                programName: program.name,
+                // Valores de diseño simulados. En una app real, vendrían del `program.design`.
+                logoText: (program as any).design?.logoText || "Senku Lealtad",
+                backgroundColor: (program as any).design?.backgroundColor || "#2962FF",
+                foregroundColor: (program as any).design?.foregroundColor || "#FFFFFF",
+            }),
         });
+        
+        if (!response.ok) {
+            throw new Error(`Error del servidor: ${response.statusText}`);
+        }
+
+        const result = await response.json();
 
         if (result.saveUrl) {
             window.open(result.saveUrl, '_blank');
+        } else {
+             throw new Error("La respuesta del servidor no contenía una URL de guardado.");
         }
 
     } catch (error) {
