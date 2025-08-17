@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader, Sparkles, Clipboard, Check, Send } from "lucide-react";
+import { customerSegments } from "./customer-management";
 
 const formSchema = z.object({
     offerName: z.string().min(1, "Se requiere el nombre de la oferta."),
@@ -142,17 +143,27 @@ export default function PushNotificationGenerator() {
                   )}
                 />
                  <FormField
-                  control={form.control}
-                  name="customerSegment"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Segmento de clientes</FormLabel>
-                      <FormControl>
-                        <Input placeholder="p.ej., Nuevos clientes, miembros VIP" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                    control={form.control}
+                    name="customerSegment"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Segmento de Clientes</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar un segmento" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="Todos los miembros de lealtad">Todos los miembros de lealtad</SelectItem>
+                                {customerSegments.map(segment => (
+                                    <SelectItem key={segment} value={segment}>{segment}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
                 />
                 <FormField
                     control={form.control}
@@ -167,11 +178,11 @@ export default function PushNotificationGenerator() {
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="Exciting">Emocionante</SelectItem>
-                                <SelectItem value="Informative">Informativo</SelectItem>
-                                <SelectItem value="Urgency">Urgencia</SelectItem>
-                                <SelectItem value="Friendly">Amistoso</SelectItem>
-                                <SelectItem value="Professional">Profesional</SelectItem>
+                                <SelectItem value="Emocionante">Emocionante</SelectItem>
+                                <SelectItem value="Informativo">Informativo</SelectItem>
+                                <SelectItem value="Urgencia">Urgencia</SelectItem>
+                                <SelectItem value="Amistoso">Amistoso</SelectItem>
+                                <SelectItem value="Profesional">Profesional</SelectItem>
                             </SelectContent>
                         </Select>
                         <FormMessage />
