@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, query } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import LoyaltyCard from "./loyalty-card";
 import VirtualAssistant from "./virtual-assistant";
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Reward } from "@/components/app/admin/reward-management";
-import type { Customer, Transaction } from "@/components/app/admin/customer-management";
+import type { Customer } from "@/components/app/admin/customer-management";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -30,6 +30,7 @@ interface CustomerDashboardProps {
 export default function CustomerDashboard({ customerId }: CustomerDashboardProps) {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [tenantId, setTenantId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -39,18 +40,34 @@ export default function CustomerDashboard({ customerId }: CustomerDashboardProps
             return;
         }
       try {
-        // Fetch Rewards
-        const rewardsSnapshot = await getDocs(collection(db, "rewards"));
-        const rewardsData = rewardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reward));
-        setRewards(rewardsData);
+        // Find which tenant the customer belongs to
+        const tenantsCollection = collection(db, 'tenants');
+        const tenantsSnapshot = await getDocs(tenantsCollection);
+        let foundCustomer: Customer | null = null;
+        let foundTenantId: string | null = null;
 
-        // Fetch Customer
-        const customerRef = doc(db, "customers", customerId);
-        const customerSnap = await getDoc(customerRef);
-        if (customerSnap.exists()) {
-            setCustomer({id: customerSnap.id, ...customerSnap.data()} as Customer);
+        for (const tenantDoc of tenantsSnapshot.docs) {
+          const customerRef = doc(db, 'tenants', tenantDoc.id, 'customers', customerId);
+          const customerSnap = await getDoc(customerRef);
+          if (customerSnap.exists()) {
+            foundCustomer = {id: customerSnap.id, ...customerSnap.data()} as Customer;
+            foundTenantId = tenantDoc.id;
+            break;
+          }
         }
+        
+        if (foundCustomer && foundTenantId) {
+          setCustomer(foundCustomer);
+          setTenantId(foundTenantId);
 
+          // Fetch Rewards for that tenant
+          const rewardsCollection = collection(db, "tenants", foundTenantId, "rewards");
+          const rewardsSnapshot = await getDocs(rewardsCollection);
+          const rewardsData = rewardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reward));
+          setRewards(rewardsData);
+        } else {
+            console.error("Customer not found in any tenant.");
+        }
       } catch (error) {
         console.error("Error al obtener datos:", error);
       } finally {

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,31 +28,60 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/hooks/use-toast";
 
 type TenantPlan = "Gratis" | "Pro" | "Empresarial";
-type TenantStatus = "Activo" | "Prueba" | "Cancelado";
+type TenantStatus = "Activo" | "Prueba" | "Cancelado" | "Suspendido";
 
 type Tenant = {
     id: string;
     name: string;
     plan: TenantPlan;
     status: TenantStatus;
-    members: number;
+    members: number; // This would need to be calculated in a real app
     createdAt: string;
 };
 
-const tenants: Tenant[] = [
-    { id: '1', name: 'Café Central', plan: 'Pro', status: 'Activo', members: 1250, createdAt: '2023-01-15' },
-    { id: '2', name: 'Librería El Saber', plan: 'Pro', status: 'Activo', members: 340, createdAt: '2023-02-20' },
-    { id: '3', name: 'Gimnasio Fuerte', plan: 'Gratis', status: 'Prueba', members: 50, createdAt: '2023-06-01' },
-    { id: '4', name: 'Spa Relajación Total', plan: 'Empresarial', status: 'Activo', members: 850, createdAt: '2022-11-10' },
-    { id: '5', name: 'Tienda de Mascotas', plan: 'Pro', status: 'Cancelado', members: 210, createdAt: '2023-03-05' },
-];
-
-
 export default function TenantManagement() {
   const router = useRouter();
+  const [tenants, setTenants] = useState<Tenant[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTenants = async () => {
+        try {
+            const tenantsSnapshot = await getDocs(collection(db, "tenants"));
+            const tenantsData: Tenant[] = [];
+            for (const doc of tenantsSnapshot.docs) {
+                const data = doc.data();
+                // In a real app, you'd aggregate the number of customers
+                const members = 0; 
+                tenantsData.push({
+                    id: doc.id,
+                    name: data.name,
+                    plan: data.plan,
+                    status: data.status,
+                    createdAt: new Date(data.createdAt).toLocaleDateString(),
+                    members
+                });
+            }
+            setTenants(tenantsData);
+        } catch (error) {
+            console.error("Error fetching tenants: ", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudieron cargar los clientes.",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchTenants();
+  }, []);
 
   const handleImpersonate = () => {
     router.push('/admin');
@@ -60,17 +89,11 @@ export default function TenantManagement() {
   
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-            <CardTitle>Clientes (Inquilinos)</CardTitle>
-            <CardDescription>
-                Una lista de todos los negocios que usan su plataforma.
-            </CardDescription>
-        </div>
-        <Button size="sm">
-            <PlusCircle className="h-4 w-4 mr-2" />
-            Añadir Cliente
-        </Button>
+      <CardHeader>
+        <CardTitle>Clientes (Inquilinos)</CardTitle>
+        <CardDescription>
+            Una lista de todos los negocios que usan su plataforma.
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
@@ -79,44 +102,55 @@ export default function TenantManagement() {
               <TableHead>Cliente</TableHead>
               <TableHead className="hidden md:table-cell">Plan</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead className="text-right hidden sm:table-cell">Miembros</TableHead>
+              <TableHead className="hidden sm:table-cell">Fecha de registro</TableHead>
               <TableHead>
                 <span className="sr-only">Acciones</span>
               </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tenants.map((tenant) => (
-                <TableRow key={tenant.id}>
-                    <TableCell>
-                        <div className="font-medium">{tenant.name}</div>
-                        <div className="text-xs text-muted-foreground hidden md:block">Inscrito: {tenant.createdAt}</div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">{tenant.plan}</TableCell>
-                    <TableCell>
-                        <Badge variant={tenant.status === 'Activo' ? 'default' : tenant.status === 'Prueba' ? 'secondary' : 'destructive'}>
-                            {tenant.status}
-                        </Badge>
-                    </TableCell>
-                    <TableCell className="text-right hidden sm:table-cell">{tenant.members.toLocaleString()}</TableCell>
-                     <TableCell>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Menú</span>
-                            </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuItem onClick={handleImpersonate}>Ver Panel</DropdownMenuItem>
-                            <DropdownMenuItem>Editar</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">Suspender</DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+            {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                    <TableRow key={i}>
+                        <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                        <TableCell className="hidden md:table-cell"><Skeleton className="h-5 w-16" /></TableCell>
+                        <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                        <TableCell className="hidden sm:table-cell"><Skeleton className="h-5 w-24" /></TableCell>
+                        <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                    </TableRow>
+                ))
+            ) : (
+                tenants.map((tenant) => (
+                    <TableRow key={tenant.id}>
+                        <TableCell>
+                            <div className="font-medium">{tenant.name}</div>
                         </TableCell>
-                </TableRow>
-            ))}
+                        <TableCell className="hidden md:table-cell">{tenant.plan}</TableCell>
+                        <TableCell>
+                            <Badge variant={tenant.status === 'Activo' ? 'default' : tenant.status === 'Prueba' ? 'secondary' : 'destructive'}>
+                                {tenant.status}
+                            </Badge>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">{tenant.createdAt}</TableCell>
+                         <TableCell>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Menú</span>
+                                </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={handleImpersonate}>Ver Panel</DropdownMenuItem>
+                                <DropdownMenuItem>Editar</DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive">Suspender</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                            </TableCell>
+                    </TableRow>
+                ))
+            )}
           </TableBody>
         </Table>
       </CardContent>

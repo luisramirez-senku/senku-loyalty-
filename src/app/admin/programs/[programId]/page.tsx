@@ -1,25 +1,54 @@
 
+"use client";
+
+import { useEffect, useState } from "react";
 import ProgramDetails from "@/components/app/admin/program-details";
 import { db } from "@/lib/firebase/client";
 import { doc, getDoc } from "firebase/firestore";
 import type { Program } from "@/components/app/admin/program-management";
-
-async function getProgram(programId: string) {
-    const docRef = doc(db, "programs", programId);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-        return { id: docSnap.id, ...docSnap.data() } as Program;
-    } else {
-        // En una aplicación real, querrías manejar esto de manera más elegante (p.ej., página 404)
-        return null;
-    }
-}
+import { useAuth } from "@/hooks/use-auth";
+import { Loader } from "lucide-react";
+import { useParams } from "next/navigation";
 
 
-export default async function ProgramDetailsPage({ params }: { params: { programId: string } }) {
-  const program = await getProgram(params.programId);
+export default function ProgramDetailsPage() {
+  const { user } = useAuth();
+  const params = useParams();
+  const programId = params.programId as string;
   
+  const [program, setProgram] = useState<Program | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const getProgram = async () => {
+        if (!user || !programId) {
+            setLoading(false);
+            return;
+        }
+        try {
+            const docRef = doc(db, "tenants", user.uid, "programs", programId);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                setProgram({ id: docSnap.id, ...docSnap.data() } as Program);
+            }
+        } catch (error) {
+            console.error("Error fetching program:", error);
+        } finally {
+            setLoading(false);
+        }
+    }
+    getProgram();
+  }, [user, programId]);
+  
+  if (loading) {
+    return (
+        <div className="flex h-screen w-full items-center justify-center">
+            <Loader className="h-8 w-8 animate-spin" />
+        </div>
+    );
+  }
+
   if (!program) {
     return <div className="p-8">Programa no encontrado.</div>
   }

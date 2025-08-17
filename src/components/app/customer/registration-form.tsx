@@ -46,7 +46,12 @@ const formSchema = z.object({
   }),
 });
 
-export default function CustomerRegistrationForm({ programId }: { programId: string }) {
+interface CustomerRegistrationFormProps {
+    programId: string;
+    tenantId: string;
+}
+
+export default function CustomerRegistrationForm({ programId, tenantId }: CustomerRegistrationFormProps) {
     const [loading, setLoading] = useState(false);
     const [submitted, setSubmitted] = useState(false);
 
@@ -65,6 +70,10 @@ export default function CustomerRegistrationForm({ programId }: { programId: str
     setLoading(true);
     try {
         const initials = values.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        
+        // The customer is created inside the specific tenant's customer collection
+        const customersCollection = collection(db, "tenants", tenantId, "customers");
+
         const customerData = {
             name: values.name,
             email: values.email,
@@ -79,7 +88,7 @@ export default function CustomerRegistrationForm({ programId }: { programId: str
             history: [],
         };
 
-        await addDoc(collection(db, "customers"), customerData);
+        await addDoc(customersCollection, customerData);
         
         toast({
             title: "¡Registro exitoso!",

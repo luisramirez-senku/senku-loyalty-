@@ -16,6 +16,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/hooks/use-auth";
 
 // Extiende el tipo Program para incluir los detalles que podríamos tener.
 interface ProgramDetailsProps {
@@ -66,9 +67,10 @@ const recentTransactions = [
 
 
 export default function ProgramDetails({ program }: ProgramDetailsProps) {
-  const registrationUrl = `/register/${program.id}`;
+  const { user } = useAuth();
+  const registrationUrl = `/register/${program.id}?tenant=${user?.uid}`;
   // Asumimos un dominio base para generar el QR completo, en producción se obtendría del entorno
-  const fullRegistrationUrl = `https://app.senku.com${registrationUrl}`;
+  const fullRegistrationUrl = `${window.location.origin}${registrationUrl}`;
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(fullRegistrationUrl)}`;
 
   return (

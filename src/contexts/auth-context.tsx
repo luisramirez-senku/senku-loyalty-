@@ -11,9 +11,9 @@ import {
     UserCredential,
     sendPasswordResetEmail,
 } from 'firebase/auth';
-import { app, db, auth } from '@/lib/firebase/client';
+import { db, auth } from '@/lib/firebase/client';
 import { Loader } from 'lucide-react';
-import { collection, writeBatch, doc } from 'firebase/firestore';
+import { collection, writeBatch, doc, setDoc } from 'firebase/firestore';
 
 // Helper function to generate initials
 const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
@@ -35,15 +35,33 @@ const demoCustomers = [
 ];
 
 const demoRewards = [
-    { id: "rew_1", name: "Café Gratis", description: "Cualquier café de tamaño mediano.", cost: 1500 },
-    { id: "rew_2", name: "Postre del Día", description: "Una porción de nuestro postre especial.", cost: 2500 },
-    { id: "rew_3", name: "20% de Descuento", description: "En tu próxima compra total.", cost: 5000 },
-    { id: "rew_4", name: "Bebida Premium", description: "Cualquier bebida especial de nuestro menú.", cost: 3500 },
+    { name: "Café Gratis", description: "Cualquier café de tamaño mediano.", cost: 1500 },
+    { name: "Postre del Día", description: "Una porción de nuestro postre especial.", cost: 2500 },
+    { name: "20% de Descuento", description: "En tu próxima compra total.", cost: 5000 },
+    { name: "Bebida Premium", description: "Cualquier bebida especial de nuestro menú.", cost: 3500 },
 ];
 
 const demoUsers = [
-    { name: 'Laura Gómez', email: 'laura.g@cashier.com', role: 'Cajero', status: 'Activo', lastLogin: '2024-07-20', initials: 'LG' },
-    { name: 'Pedro Morales', email: 'pedro.m@manager.com', role: 'Gerente', status: 'Activo', lastLogin: '2024-07-21', initials: 'PM' }
+    { name: 'Laura Gómez', email: 'laura.g@cashier.com', role: 'Cajero', status: 'Activo', lastLogin: '2024-07-20' },
+    { name: 'Pedro Morales', email: 'pedro.m@manager.com', role: 'Gerente', status: 'Activo', lastLogin: '2024-07-21' }
+];
+
+const demoPrograms = [
+    {
+        name: "Programa de Puntos Demo",
+        type: "Puntos",
+        status: "Activo",
+        members: 5,
+        created: "2024-01-01",
+        description: "Un programa de puntos de demostración para empezar.",
+        rules: { pointsPerAmount: 10, amountForPoints: 1 },
+        design: {
+            logoText: "Tu Cafetería",
+            backgroundColor: "#4A5568",
+            foregroundColor: "#FFFFFF",
+            labelColor: "#A0AEC0",
+        }
+    }
 ];
 
 export interface AuthContextType {
@@ -57,39 +75,55 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Function to seed data for a new user
-const seedInitialData = async (userId: string, userName: string, userEmail: string) => {
+// Function to seed data for a new user, now as a tenant
+const seedInitialData = async (tenantId: string, tenantName: string, adminEmail: string) => {
     const batch = writeBatch(db);
 
-    // 1. Create the admin user for the new account
-    const adminUserRef = doc(db, "users", userId);
+    // Create the tenant document
+    const tenantRef = doc(db, "tenants", tenantId);
+    batch.set(tenantRef, {
+        name: tenantName,
+        ownerEmail: adminEmail,
+        createdAt: new Date().toISOString(),
+        plan: "Pro",
+        status: "Activo"
+    });
+
+    // 1. Create the admin user for the new account inside the tenant's user collection
+    const adminUserRef = doc(db, "tenants", tenantId, "users", tenantId);
     batch.set(adminUserRef, {
-        id: userId,
-        name: userName,
-        email: userEmail,
+        name: tenantName, // Business name can be the initial admin name
+        email: adminEmail,
         role: "Admin",
         status: "Activo",
         lastLogin: new Date().toLocaleDateString(),
-        initials: getInitials(userName)
+        initials: getInitials(tenantName)
     });
 
-    // 2. Seed other demo users
+    // 2. Seed other demo users inside the tenant's user collection
     demoUsers.forEach(user => {
-        const userRef = doc(collection(db, "users"));
-        batch.set(userRef, { ...user, id: userRef.id });
+        const userRef = doc(collection(db, "tenants", tenantId, "users"));
+        batch.set(userRef, { ...user, initials: getInitials(user.name) });
     });
     
-    // 3. Seed customers
+    // 3. Seed customers inside the tenant's customer collection
     demoCustomers.forEach(customer => {
-        const customerRef = doc(db, "customers", customer.id); // Use predefined ID
+        const customerRef = doc(db, "tenants", tenantId, "customers", customer.id);
         batch.set(customerRef, customer);
     });
 
-    // 4. Seed rewards
+    // 4. Seed rewards inside the tenant's reward collection
     demoRewards.forEach(reward => {
-        const rewardRef = doc(collection(db, "rewards"));
-        batch.set(rewardRef, { ...reward, id: rewardRef.id });
+        const rewardRef = doc(collection(db, "tenants", tenantId, "rewards"));
+        batch.set(rewardRef, reward);
     });
+
+    // 5. Seed programs inside the tenant's program collection
+    demoPrograms.forEach(program => {
+        const programRef = doc(collection(db, "tenants", tenantId, "programs"));
+        batch.set(programRef, { ...program, id: programRef.id }); // Add the generated ID to the doc
+    })
+
 
     await batch.commit();
 }
@@ -115,7 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (email: string, pass: string, name: string) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     if (userCredential.user) {
-        // After user is created in Auth, seed their Firestore data
+        // After user is created in Auth, seed their tenant data
         await seedInitialData(userCredential.user.uid, name, email);
     }
     return userCredential;

@@ -34,6 +34,7 @@ import { EditCustomerDialog } from "./edit-customer-dialog";
 import { ViewHistoryDialog } from "./view-history-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 // Tipos de datos
 export type Customer = {
@@ -67,6 +68,7 @@ export const segmentDescriptions: Record<string, string> = {
 
 
 export default function CustomerManagement() {
+    const { user } = useAuth();
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
@@ -81,8 +83,13 @@ export default function CustomerManagement() {
 
     useEffect(() => {
         const fetchCustomers = async () => {
+            if (!user) {
+                setLoading(false);
+                return;
+            }
             try {
-                const querySnapshot = await getDocs(collection(db, "customers"));
+                const customersCollection = collection(db, "tenants", user.uid, "customers");
+                const querySnapshot = await getDocs(customersCollection);
                 const customersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
                 setCustomers(customersData);
                 setFilteredCustomers(customersData);
@@ -98,7 +105,7 @@ export default function CustomerManagement() {
             }
         };
         fetchCustomers();
-    }, []);
+    }, [user]);
 
     const handleAdd = () => {
         setSelectedCustomer(null);
@@ -121,9 +128,10 @@ export default function CustomerManagement() {
     }
 
     const onCustomerSave = async (customerData: Omit<Customer, 'id' | 'initials' | 'joined'> & { id?: string }) => {
+        if (!user) return;
         try {
             if (customerData.id) { // Editing existing customer
-                const customerRef = doc(db, "customers", customerData.id);
+                const customerRef = doc(db, "tenants", user.uid, "customers", customerData.id);
                 await updateDoc(customerRef, customerData);
                 const updatedCustomer = { ...customers.find(c => c.id === customerData.id)!, ...customerData };
                 const updatedList = customers.map(c => c.id === customerData.id ? updatedCustomer : c);
@@ -134,7 +142,8 @@ export default function CustomerManagement() {
                 const initials = customerData.name.split(' ').map(n => n[0]).join('');
                 const joined = new Date().toISOString().split('T')[0];
                 const newCustomerData = { ...customerData, initials, joined };
-                const docRef = await addDoc(collection(db, "customers"), newCustomerData);
+                const customersCollection = collection(db, "tenants", user.uid, "customers");
+                const docRef = await addDoc(customersCollection, newCustomerData);
                 const newCustomer = { ...newCustomerData, id: docRef.id };
                 const updatedList = [...customers, newCustomer];
                 setCustomers(updatedList);
@@ -149,8 +158,9 @@ export default function CustomerManagement() {
     };
 
     const onCustomerDelete = async (customerId: string) => {
+       if (!user) return;
        try {
-            await deleteDoc(doc(db, "customers", customerId));
+            await deleteDoc(doc(db, "tenants", user.uid, "customers", customerId));
             const updatedList = customers.filter(c => c.id !== customerId);
             setCustomers(updatedList);
             applyFilters(segmentFilter, dateFilter, updatedList);
@@ -407,5 +417,3 @@ export default function CustomerManagement() {
     </>
   );
 }
-
-    

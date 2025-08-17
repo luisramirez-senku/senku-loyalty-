@@ -34,7 +34,7 @@ import { AddEditUserDialog } from "./add-edit-user-dialog";
 import { DeactivateUserDialog } from "./deactivate-user-dialog";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { useAuth } from "@/hooks/use-auth";
 
 export type UserRole = "Cajero" | "Gerente" | "Admin";
 export type UserStatus = "Activo" | "Inactivo";
@@ -51,6 +51,7 @@ export type User = {
 };
 
 export default function UserManagement() {
+  const { user: authUser } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -59,9 +60,14 @@ export default function UserManagement() {
 
   useEffect(() => {
     const fetchUsers = async () => {
+        if (!authUser) {
+            setLoading(false);
+            return;
+        }
         setLoading(true);
         try {
-            const querySnapshot = await getDocs(collection(db, "users"));
+            const usersCollection = collection(db, "tenants", authUser.uid, "users");
+            const querySnapshot = await getDocs(usersCollection);
             const usersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
             setUsers(usersData);
         } catch (error) {
@@ -76,7 +82,7 @@ export default function UserManagement() {
         }
     };
     fetchUsers();
-  }, []);
+  }, [authUser]);
 
   const handleOpenDialog = (user?: User) => {
     setSelectedUser(user || null);
@@ -88,10 +94,12 @@ export default function UserManagement() {
     setDeactivateOpen(true);
   };
 
-  const handleSaveUser = async (userData: Omit<User, 'id' | 'initials' | 'lastLogin'> & { id?: string }) => {
+  const handleSaveUser = async (userData: Omit<User, 'id' | 'initials' | 'lastLogin' | 'status'> & { id?: string }) => {
+    if (!authUser) return;
+    const usersCollection = collection(db, "tenants", authUser.uid, "users");
     try {
         if (userData.id) { // Editing existing user
-            const userRef = doc(db, "users", userData.id);
+            const userRef = doc(usersCollection, userData.id);
             const { id, ...dataToUpdate } = userData;
             await updateDoc(userRef, dataToUpdate);
 
@@ -100,14 +108,14 @@ export default function UserManagement() {
             toast({ title: "Usuario Actualizado", description: "Los datos del usuario han sido guardados." });
         } else { // Adding new user
             const initials = userData.name.split(' ').map(n => n[0]).join('').toUpperCase();
-            const newUserDoc = {
+            const newUserDocData = {
                 ...userData,
                 initials,
                 status: 'Activo' as UserStatus,
                 lastLogin: 'Nunca',
             };
-            const docRef = await addDoc(collection(db, "users"), newUserDoc);
-            const newUser = { ...newUserDoc, id: docRef.id };
+            const docRef = await addDoc(usersCollection, newUserDocData);
+            const newUser = { ...newUserDocData, id: docRef.id };
             setUsers([...users, newUser]);
             toast({ title: "Usuario Agregado", description: "El nuevo usuario ha sido creado." });
         }
@@ -119,12 +127,13 @@ export default function UserManagement() {
   };
 
   const handleToggleStatus = async (userId: string) => {
+    if (!authUser) return;
     const user = users.find(u => u.id === userId);
     if (!user) return;
 
     try {
         const newStatus = user.status === 'Activo' ? 'Inactivo' : 'Activo';
-        const userRef = doc(db, "users", userId);
+        const userRef = doc(db, "tenants", authUser.uid, "users", userId);
         await updateDoc(userRef, { status: newStatus });
 
         setUsers(users.map(u => u.id === userId ? { ...u, status: newStatus } : u));
@@ -215,7 +224,7 @@ export default function UserManagement() {
                         <TableCell>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <Button aria-haspopup="true" size="icon" variant="ghost" disabled={user.id === authUser?.uid}>
                                 <MoreHorizontal className="h-4 w-4" />
                                 <span className="sr-only">Menú de palanca</span>
                             </Button>

@@ -18,6 +18,7 @@ import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddEditRewardDialog } from "./add-edit-reward-dialog";
 import { DeleteRewardDialog } from "./delete-reward-dialog";
+import { useAuth } from "@/hooks/use-auth";
 
 
 export type Reward = {
@@ -28,6 +29,7 @@ export type Reward = {
 };
 
 export default function RewardManagement() {
+  const { user } = useAuth();
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -37,8 +39,13 @@ export default function RewardManagement() {
 
   useEffect(() => {
     const fetchRewards = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       try {
-        const querySnapshot = await getDocs(collection(db, "rewards"));
+        const rewardsCollection = collection(db, "tenants", user.uid, "rewards");
+        const querySnapshot = await getDocs(rewardsCollection);
         const rewardsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reward));
         setRewards(rewardsData);
       } catch (error) {
@@ -53,7 +60,7 @@ export default function RewardManagement() {
       }
     };
     fetchRewards();
-  }, []);
+  }, [user]);
 
   const handleAdd = () => {
     setSelectedReward(null);
@@ -71,15 +78,17 @@ export default function RewardManagement() {
   };
 
   const onSave = async (rewardData: Omit<Reward, 'id'> & { id?: string }) => {
+    if (!user) return;
     try {
+      const rewardsCollection = collection(db, "tenants", user.uid, "rewards");
       if (rewardData.id) { // Editing
-        const rewardRef = doc(db, "rewards", rewardData.id);
+        const rewardRef = doc(rewardsCollection, rewardData.id);
         const { id, ...dataToUpdate } = rewardData;
         await updateDoc(rewardRef, dataToUpdate);
         setRewards(rewards.map(r => r.id === rewardData.id ? { ...r, ...dataToUpdate, id: r.id } : r));
         toast({ title: "Recompensa Actualizada", description: "Los datos de la recompensa han sido guardados." });
       } else { // Adding
-        const docRef = await addDoc(collection(db, "rewards"), rewardData);
+        const docRef = await addDoc(rewardsCollection, rewardData);
         setRewards([...rewards, { ...rewardData, id: docRef.id }]);
         toast({ title: "Recompensa Agregada", description: "La nueva recompensa ha sido creada." });
       }
@@ -91,8 +100,10 @@ export default function RewardManagement() {
   };
 
   const onDelete = async (rewardId: string) => {
+    if (!user) return;
     try {
-      await deleteDoc(doc(db, "rewards", rewardId));
+      const rewardRef = doc(db, "tenants", user.uid, "rewards", rewardId);
+      await deleteDoc(rewardRef);
       setRewards(rewards.filter(r => r.id !== rewardId));
       setDeleteOpen(false);
       toast({ title: "Recompensa Eliminada", description: "La recompensa ha sido eliminada." });

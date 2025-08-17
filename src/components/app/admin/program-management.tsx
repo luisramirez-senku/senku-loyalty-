@@ -27,6 +27,7 @@ import Link from "next/link";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/use-auth";
 
 type ProgramStatus = "Activo" | "Borrador" | "Archivado";
 
@@ -53,13 +54,19 @@ const TypeIcon = ({ type }: { type: string }) => {
 }
 
 export default function ProgramManagement() {
+  const { user } = useAuth();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchPrograms = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
       try {
-        const querySnapshot = await getDocs(collection(db, "programs"));
+        const programsCollection = collection(db, "tenants", user.uid, "programs");
+        const querySnapshot = await getDocs(programsCollection);
         const programsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Program));
         setPrograms(programsData);
       } catch (error) {
@@ -74,11 +81,12 @@ export default function ProgramManagement() {
       }
     };
     fetchPrograms();
-  }, []);
+  }, [user]);
 
   const handleUpdateStatus = async (programId: string, status: ProgramStatus) => {
+    if (!user) return;
     try {
-      const programRef = doc(db, "programs", programId);
+      const programRef = doc(db, "tenants", user.uid, "programs", programId);
       await updateDoc(programRef, { status });
       setPrograms(programs.map(p => p.id === programId ? { ...p, status } : p));
       toast({
@@ -180,7 +188,7 @@ export default function ProgramManagement() {
                 </div>
                 </CardContent>
                 <CardFooter className="flex-col items-start gap-2 pt-4 border-t">
-                    <Link href={`/register/${program.id}`} passHref>
+                    <Link href={`/register/${program.id}?tenant=${user?.uid}`} passHref>
                         <Button variant="link" className="p-0 h-auto">
                             <LinkIcon className="h-4 w-4 mr-2" />
                             Enlace de registro

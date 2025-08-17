@@ -14,7 +14,7 @@ import {
 import { Star, Loader } from "lucide-react";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase/client";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, where, limit } from "firebase/firestore";
 import type { Customer } from "@/components/app/admin/customer-management";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +28,7 @@ interface LoyaltyCardProps {
 
 export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
   const [customer, setCustomer] = useState<Customer | null>(null);
+  const [tenantId, setTenantId] = useState<string | null>(null);
   const [program, setProgram] = useState<Program | null>(null);
   const [loading, setLoading] = useState(true);
   const [passLoading, setPassLoading] = useState(false);
@@ -40,22 +41,36 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
           return;
       }
       try {
-        const customerRef = doc(db, "customers", customerId);
-        const customerSnap = await getDoc(customerRef);
-        
-        if (customerSnap.exists()) {
-          const customerData = { id: customerSnap.id, ...customerSnap.data() } as Customer;
-          setCustomer(customerData);
+        // This is a complex query to find the tenant that owns this customer.
+        // In a real-world scenario with proper indexing, this can be efficient.
+        const tenantsCollection = collection(db, 'tenants');
+        const tenantsSnapshot = await getDocs(tenantsCollection);
+        let foundCustomer: Customer | null = null;
+        let foundTenantId: string | null = null;
 
-          // Suponiendo que el customer tiene un programId. En una app real, esto estaría definido.
-          const programId = (customerData as any).programId || "defaultProgram"; 
-          
-          const programRef = doc(db, "programs", "C9Lh2V7aCq3v8xY5kF2w"); // Hardcoded para la demo
-          const programSnap = await getDoc(programRef);
-          if (programSnap.exists()) {
-            setProgram({ id: programSnap.id, ...programSnap.data() } as Program);
+        for (const tenantDoc of tenantsSnapshot.docs) {
+          const customerRef = doc(db, 'tenants', tenantDoc.id, 'customers', customerId);
+          const customerSnap = await getDoc(customerRef);
+          if (customerSnap.exists()) {
+            foundCustomer = { id: customerSnap.id, ...customerSnap.data() } as Customer;
+            foundTenantId = tenantDoc.id;
+            break;
+          }
+        }
+        
+        if (foundCustomer && foundTenantId) {
+          setCustomer(foundCustomer);
+          setTenantId(foundTenantId);
+
+          const programId = (foundCustomer as any).programId;
+          if (programId) {
+            const programRef = doc(db, "tenants", foundTenantId, "programs", programId);
+            const programSnap = await getDoc(programRef);
+            if (programSnap.exists()) {
+              setProgram({ id: programSnap.id, ...programSnap.data() } as Program);
+            }
           } else {
-             // Fallback program
+             // Fallback program if not specified
              setProgram({ id: 'fallback', name: 'Programa de Lealtad', type: 'Puntos', status: 'Activo', members: 0, created: '' });
           }
 
@@ -93,7 +108,9 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
                 customerPoints: customer.points,
                 customerTier: customer.tier,
                 programName: program.name,
-                // Valores de diseño simulados. En una app real, vendrían del `program.design`.
+                // Pass tenantId to wallet function if needed for branding etc.
+                tenantId: tenantId,
+                // Values from program design
                 logoText: (program as any).design?.logoText || "Senku Lealtad",
                 backgroundColor: (program as any).design?.backgroundColor || "#2962FF",
                 foregroundColor: (program as any).design?.foregroundColor || "#FFFFFF",

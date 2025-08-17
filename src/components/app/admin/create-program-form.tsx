@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { db } from "@/lib/firebase/client";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -38,9 +38,10 @@ import {
   } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, DollarSign, Loader, Percent, Stamp, Star } from "lucide-react";
+import { ArrowLeft, DollarSign, Loader, Percent, Stamp, Star } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/use-auth";
 
 const formSchema = z.object({
   programType: z.enum(["Puntos", "Sellos", "Cashback"], {
@@ -72,6 +73,7 @@ const formSchema = z.object({
 type ProgramType = "Puntos" | "Sellos" | "Cashback";
 
 export default function CreateProgramForm() {
+    const { user } = useAuth();
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const router = useRouter();
@@ -91,8 +93,14 @@ export default function CreateProgramForm() {
       });
     
       async function onSubmit(values: z.infer<typeof formSchema>) {
+        if (!user) {
+            toast({ variant: "destructive", title: "No autenticado", description: "Debes iniciar sesión para crear un programa." });
+            return;
+        }
         setLoading(true);
         try {
+            const programsCollection = collection(db, "tenants", user.uid, "programs");
+
             // Estructura de datos para Firestore
             const programData = {
                 name: values.programName,
@@ -115,7 +123,7 @@ export default function CreateProgramForm() {
                 }
             };
     
-            await addDoc(collection(db, "programs"), programData);
+            await addDoc(programsCollection, programData);
     
             toast({
                 title: "Programa Creado",
