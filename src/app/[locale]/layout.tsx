@@ -8,12 +8,7 @@ import { NextIntlClientProvider, useMessages } from 'next-intl';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 
-export const metadata: Metadata = {
-  title: 'Senku Lealtad',
-  description: 'Una plataforma de lealtad moderna para empresas.',
-};
-
-export default function RootLayout({
+export default function LocaleLayout({
   children,
   params: { locale }
 }: Readonly<{
@@ -37,3 +32,4 @@ export default function RootLayout({
     </html>
   );
 }
+
