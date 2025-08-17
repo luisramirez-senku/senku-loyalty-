@@ -29,7 +29,17 @@ import { Loader } from "lucide-react";
 import Link from "next/link";
 import Logo from "../shared/logo";
 
-const formSchema = z.object({
+const loginSchema = z.object({
+    email: z.string().email({
+      message: "Por favor, introduce una dirección de correo electrónico válida.",
+    }),
+    password: z.string().min(6, {
+      message: "La contraseña debe tener al menos 6 caracteres.",
+    }),
+  });
+
+const signupSchema = z.object({
+  name: z.string().min(2, "El nombre del negocio es requerido."),
   email: z.string().email({
     message: "Por favor, introduce una dirección de correo electrónico válida.",
   }),
@@ -37,6 +47,7 @@ const formSchema = z.object({
     message: "La contraseña debe tener al menos 6 caracteres.",
   }),
 });
+
 
 interface AuthFormProps {
   mode: "login" | "signup";
@@ -52,41 +63,51 @@ export default function AuthForm({ mode }: AuthFormProps) {
   const description = mode === "login"
     ? "Ingresa tus credenciales para acceder a tu panel."
     : "Completa el formulario para registrar un nuevo negocio.";
-  const buttonText = mode === "login" ? "Iniciar Sesión" : "Crear Cuenta";
+  const buttonText = mode === "login" ? "Iniciar Sesión" : "Crear Cuenta y Entorno Demo";
   const footerText = mode === "login"
     ? "¿No tienes una cuenta?"
     : "¿Ya tienes una cuenta?";
   const footerLink = mode === "login" ? "/signup" : "/login";
   const footerLinkText = mode === "login" ? "Regístrate" : "Inicia Sesión";
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<z.infer<typeof loginSchema | typeof signupSchema>>({
+    resolver: zodResolver(mode === 'login' ? loginSchema : signupSchema),
     defaultValues: {
       email: "",
       password: "",
+      ...(mode === 'signup' && { name: '' }),
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof loginSchema | typeof signupSchema>) {
     setLoading(true);
     try {
       if (mode === "login") {
-        await login(values.email, values.password);
+        const { email, password } = values as z.infer<typeof loginSchema>;
+        await login(email, password);
       } else {
-        await signup(values.email, values.password);
+        const { email, password, name } = values as z.infer<typeof signupSchema>;
+        await signup(email, password, name);
       }
       toast({
-        title: mode === "login" ? "¡Bienvenido de vuelta!" : "¡Registro exitoso!",
+        title: mode === "login" ? "¡Bienvenido de vuelta!" : "¡Entorno Demo Creado!",
         description: "Serás redirigido a tu panel.",
       });
       // Redirect to admin panel after successful login/signup
       router.push("/admin"); 
     } catch (error: any) {
       console.error("Error de autenticación:", error);
+      const errorCode = error.code;
+      let errorMessage = "Ocurrió un error. Por favor, inténtalo de nuevo.";
+      if (errorCode === 'auth/email-already-in-use') {
+        errorMessage = "Este correo electrónico ya está registrado. Por favor, inicia sesión.";
+      } else if (errorCode === 'auth/wrong-password' || errorCode === 'auth/user-not-found' || errorCode === 'auth/invalid-credential') {
+        errorMessage = "Correo electrónico o contraseña incorrectos.";
+      }
       toast({
         variant: "destructive",
         title: "Error de autenticación",
-        description: error.message || "Ocurrió un error. Por favor, inténtalo de nuevo.",
+        description: errorMessage,
       });
     } finally {
       setLoading(false);
@@ -107,6 +128,21 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+             {mode === 'signup' && (
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Nombre del Negocio</FormLabel>
+                        <FormControl>
+                        <Input placeholder="Ej: Mi Cafetería Favorita" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              )}
               <FormField
                 control={form.control}
                 name="email"
