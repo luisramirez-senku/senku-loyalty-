@@ -43,6 +43,9 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 
+// In a real production app, this should be an environment variable
+const CREATE_WALLET_CLASS_FUNCTION_URL = "https://us-central1-senku-loyalty.cloudfunctions.net/createWalletClass";
+
 const formSchema = z.object({
   programType: z.enum(["Puntos", "Sellos", "Cashback"], {
     required_error: "Debes seleccionar un tipo de programa.",
@@ -58,7 +61,6 @@ const formSchema = z.object({
   cashbackPercentage: z.coerce.number().optional(),
 
   // Wallet Pass Fields
-  walletClassId: z.string().min(1, "El ID de la Clase de Wallet es requerido."),
   logoText: z.string().optional(),
   foregroundColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
   backgroundColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
@@ -90,7 +92,6 @@ export default function CreateProgramForm() {
             backgroundColor: "#000000",
             labelColor: "#ffffff",
             barcodeType: "PKBarcodeFormatQR",
-            walletClassId: "",
         },
       });
     
@@ -100,16 +101,43 @@ export default function CreateProgramForm() {
             return;
         }
         setLoading(true);
+
         try {
+            // 1. Call the Cloud Function to create the Wallet Class
+            toast({ title: "Creando plantilla de Wallet...", description: "Por favor espere." });
+            const classResponse = await fetch(CREATE_WALLET_CLASS_FUNCTION_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    programName: values.programName,
+                    issuerName: values.issuerName,
+                    logoText: values.logoText,
+                    backgroundColor: values.backgroundColor,
+                    foregroundColor: values.foregroundColor,
+                }),
+            });
+
+            if (!classResponse.ok) {
+                const errorData = await classResponse.text();
+                throw new Error(`Error al crear la clase de Wallet: ${errorData}`);
+            }
+
+            const { walletClassId } = await classResponse.json();
+
+            if (!walletClassId) {
+                 throw new Error("No se recibió el walletClassId desde la función.");
+            }
+             toast({ title: "Plantilla creada", description: "Guardando el programa en la base de datos." });
+
+            // 2. Save the program to Firestore with the new walletClassId
             const programsCollection = collection(db, "tenants", user.uid, "programs");
 
-            // Estructura de datos para Firestore
             const programData = {
                 name: values.programName,
                 type: values.programType,
-                status: "Borrador", // Se crea como borrador por defecto
+                status: "Borrador",
                 members: 0,
-                created: new Date().toISOString().split('T')[0], // Formato YYYY-MM-DD
+                created: new Date().toISOString().split('T')[0],
                 description: values.programDescription || "",
                 rules: {
                     pointsPerAmount: values.pointsPerAmount || null,
@@ -118,7 +146,7 @@ export default function CreateProgramForm() {
                     cashbackPercentage: values.cashbackPercentage || null,
                 },
                 design: {
-                    walletClassId: values.walletClassId,
+                    walletClassId: walletClassId, // Use the ID from the function
                     logoText: values.issuerName,
                     backgroundColor: values.backgroundColor,
                     foregroundColor: values.foregroundColor,
@@ -129,7 +157,7 @@ export default function CreateProgramForm() {
             await addDoc(programsCollection, programData);
     
             toast({
-                title: "Programa Creado",
+                title: "Programa Creado Exitosamente",
                 description: "El nuevo programa de lealtad ha sido creado como borrador.",
             });
             router.push("/admin/programs");
@@ -138,7 +166,7 @@ export default function CreateProgramForm() {
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "No se pudo crear el programa. Inténtalo de nuevo.",
+                description: `No se pudo crear el programa. ${error instanceof Error ? error.message : ''}`,
             });
         } finally {
             setLoading(false);
@@ -360,20 +388,6 @@ export default function CreateProgramForm() {
                         <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             <FormField
                                 control={form.control}
-                                name="walletClassId"
-                                render={({ field }) => (
-                                    <FormItem className="lg:col-span-3">
-                                    <FormLabel>ID de la Clase de Wallet</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="ID de la clase de Google Wallet" {...field} />
-                                    </FormControl>
-                                    <FormDescription>Este ID se obtiene al crear la clase de lealtad en la consola de Google.</FormDescription>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
                                 name="logoText"
                                 render={({ field }) => (
                                     <FormItem>
@@ -509,5 +523,3 @@ export default function CreateProgramForm() {
     </div>
   );
 }
-
-    

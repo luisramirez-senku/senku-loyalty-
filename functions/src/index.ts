@@ -21,6 +21,96 @@ setGlobalOptions({region: "us-central1"});
 const ISSUER_ID = "3388000000022316666"; // <<<--- REPLACE WITH YOUR ISSUER ID
 
 
+export const createWalletClass = onRequest(
+  {cors: true},
+  async (request, response) => {
+    logger.info("createWalletClass function triggered", {body: request.body});
+
+    // 1. Authenticate with Google
+    const auth = new GoogleAuth({
+      scopes: ["https://www.googleapis.com/auth/wallet_object.issuer"],
+    });
+    const authClient = await auth.getClient();
+
+    // 2. Validate Input
+    const {
+      programName,
+      issuerName,
+      logoText,
+      backgroundColor,
+      foregroundColor,
+    } = request.body;
+
+    if (!programName || !issuerName) {
+      logger.error("Missing required fields for class creation");
+      response.status(400).send("Missing programName or issuerName.");
+      return;
+    }
+
+    const classId = uuidv4();
+    const fullClassId = `${ISSUER_ID}.${classId}`;
+
+    const loyaltyClass = {
+      id: fullClassId,
+      issuerName: issuerName,
+      programName: programName,
+      reviewStatus: "under_review",
+      hexBackgroundColor: backgroundColor || "#2962FF", // Default color
+      hexFontColor: foregroundColor || "#FFFFFF",
+      cardTitle: {
+        defaultValue: {
+          language: "es-US",
+          value: logoText || issuerName,
+        },
+      },
+      header: {
+        defaultValue: {
+          language: "es-US",
+          value: programName,
+        },
+      },
+      loyaltyPoints: {
+        label: "Puntos",
+        balance: {
+          string: "0",
+        },
+      },
+      textModulesData: [
+        {
+          id: "points",
+          header: "PUNTOS",
+          body: "...",
+        },
+        {
+          id: "tier",
+          header: "NIVEL",
+          body: "...",
+        },
+      ],
+      // Add other required fields for a class
+      // See: https://developers.google.com/wallet/reference/rest/v1/loyaltyclass
+    };
+
+    try {
+      // 4. Make the API call to Google Wallet
+      const apiResponse = await authClient.request({
+        url: "https://walletobjects.googleapis.com/walletobjects/v1/loyaltyClass",
+        method: "POST",
+        data: loyaltyClass,
+      });
+
+      logger.info("Successfully created Loyalty Class:", apiResponse.data);
+
+      // 5. Send the new class ID back to the client
+      response.json({walletClassId: classId});
+    } catch (error: any) {
+      logger.error("Error creating wallet class:", error.response?.data || error.message);
+      response.status(500).send("Error creating wallet class.");
+    }
+  }
+);
+
+
 export const generateWalletPass = onRequest(
   {cors: true}, // Enable CORS for client-side requests
   async (request, response) => {
@@ -46,10 +136,6 @@ export const generateWalletPass = onRequest(
       customerName,
       customerPoints,
       customerTier,
-      programName,
-      logoText,
-      backgroundColor,
-      foregroundColor,
     } = request.body;
 
     if (!tenantId || !programId || !customerId || !customerName || customerPoints === undefined) {
@@ -57,21 +143,22 @@ export const generateWalletPass = onRequest(
       response.status(400).send("Missing required fields.");
       return;
     }
-    
-    // 3. Get Loyalty Class ID from the program document in Firestore
+
+    // 3. Get Loyalty Class ID and program details from the program document in Firestore
     let loyaltyClassId;
+    let programData;
     try {
-        const programRef = db.collection("tenants").doc(tenantId).collection("programs").doc(programId);
+        const programRef = doc(db, "tenants", tenantId, "programs", programId);
         const programSnap = await programRef.get();
-        if (!programSnap.exists) {
+        if (!programSnap.exists()) {
             throw new Error(`Program ${programId} not found for tenant ${tenantId}.`);
         }
-        const programData = programSnap.data();
+        programData = programSnap.data();
         if (!programData?.design?.walletClassId) {
             throw new Error(`walletClassId not found in program ${programId}.`);
         }
         loyaltyClassId = programData.design.walletClassId;
-    } catch(error) {
+    } catch (error) {
         logger.error("Error fetching program details:", error);
         response.status(500).send("Error fetching program configuration.");
         return;
@@ -135,17 +222,17 @@ export const generateWalletPass = onRequest(
       cardTitle: {
         defaultValue: {
           language: "es-US",
-          value: logoText,
+          value: programData?.design?.logoText || programData?.name || "Tarjeta de Lealtad",
         },
       },
       header: {
         defaultValue: {
           language: "es-US",
-          value: programName,
+          value: programData?.name,
         },
       },
-      hexBackgroundColor: backgroundColor,
-      hexFontColor: foregroundColor,
+      hexBackgroundColor: programData?.design?.backgroundColor || "#2962FF",
+      hexFontColor: programData?.design?.foregroundColor || "#FFFFFF",
     };
 
     // 5. Create the JWT for the "Save to Wallet" button
@@ -294,5 +381,3 @@ export const paypalWebhookHandler = onRequest(async (request, response) => {
     response.status(500).send("Internal Server Error");
   }
 });
-
-    
