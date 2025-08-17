@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -21,6 +22,7 @@ import {
   LogOut,
   Settings,
   Workflow,
+  Sparkles,
 } from "lucide-react";
 import Logo from "@/components/app/shared/logo";
 
@@ -28,6 +30,7 @@ const menuItems = [
   { href: "/admin", label: "Panel", icon: BarChart2 },
   { href: "/admin/customers", label: "Clientes", icon: Users },
   { href: "/admin/programs", label: "Programas", icon: Award },
+  { href: "/admin/rewards", label: "Recompensas", icon: Sparkles },
   { href: "/admin/offers", label: "Ofertas", icon: Gift },
   { href: "/admin/promotions", label: "Notificaciones Push", icon: Bell },
   { href: "/admin/automations", label: "Automatizaciones", icon: Workflow },
