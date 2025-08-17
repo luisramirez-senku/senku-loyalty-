@@ -74,8 +74,9 @@ export default function RewardManagement() {
     try {
       if (rewardData.id) { // Editing
         const rewardRef = doc(db, "rewards", rewardData.id);
-        await updateDoc(rewardRef, rewardData);
-        setRewards(rewards.map(r => r.id === rewardData.id ? { ...r, ...rewardData } : r));
+        const { id, ...dataToUpdate } = rewardData;
+        await updateDoc(rewardRef, dataToUpdate);
+        setRewards(rewards.map(r => r.id === rewardData.id ? { ...r, ...dataToUpdate, id: r.id } : r));
         toast({ title: "Recompensa Actualizada", description: "Los datos de la recompensa han sido guardados." });
       } else { // Adding
         const docRef = await addDoc(collection(db, "rewards"), rewardData);
@@ -151,7 +152,7 @@ export default function RewardManagement() {
                             <Button variant="outline" size="sm" className="flex-1" onClick={() => handleEdit(reward)}>
                                 <Edit className="h-4 w-4 mr-2" /> Editar
                             </Button>
-                            <Button variant="destructive-outline" size="sm" onClick={() => handleDelete(reward)}>
+                            <Button variant="destructive" size="sm" className="flex-1" onClick={() => handleDelete(reward)}>
                                 <Trash2 className="h-4 w-4 mr-2" /> Eliminar
                             </Button>
                         </CardFooter>

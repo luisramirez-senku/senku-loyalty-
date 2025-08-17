@@ -47,6 +47,11 @@ export function AddEditRewardDialog({
 }: AddEditRewardDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+      cost: 0,
+    }
   });
 
   const isEditing = !!reward;
