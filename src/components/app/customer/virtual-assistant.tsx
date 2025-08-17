@@ -30,7 +30,7 @@ export default function VirtualAssistant() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "¡Hola! ¿Cómo puedo ayudarte con tu cuenta de lealtad hoy?",
+      content: "¡Hola! Soy tu agente de lealtad. Pregúntame por tus puntos, recompensas o incluso puedes pedirme que canjee una por ti.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -47,14 +47,8 @@ export default function VirtualAssistant() {
     setLoading(true);
 
     try {
-      // In a real app, this data would be fetched from a database
-      const loyaltyProgramDetails = "El programa tiene tres niveles: Bronce (0-4999 pts), Plata (5000-9999 pts) y Oro (10000+ pts). Las recompensas incluyen bebidas gratis, descuentos y ofertas exclusivas.";
-      const customerInformation = "Cliente: Charles Webb, Nivel: Oro, Puntos: 25,000.";
-
       const result = await loyaltyProgramAssistant({
         query: input,
-        loyaltyProgramDetails,
-        customerInformation,
       });
       const assistantMessage: Message = {
         role: "assistant",

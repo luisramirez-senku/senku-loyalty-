@@ -3,7 +3,7 @@
 'use server';
 
 /**
- * @fileOverview A virtual assistant powered by Gemini to answer loyalty program questions.
+ * @fileOverview A virtual assistant powered by Gemini to answer loyalty program questions and perform actions.
  *
  * - loyaltyProgramAssistant - A function that handles the virtual assistant process.
  * - LoyaltyProgramAssistantInput - The input type for the loyaltyProgramAssistant function.
@@ -13,10 +13,88 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
+// Mock Data - In a real app, this would come from a database.
+const mockCustomer = {
+    name: 'Charles Webb',
+    tier: 'Oro',
+    points: 25000,
+};
+
+const mockRewards = [
+    { id: 'reward_1', name: 'Café o Té Gratis', cost: 1500 },
+    { id: 'reward_2', name: 'Pastel Gratis', cost: 2500 },
+    { id: 'reward_3', name: '20% de Descuento en Mercancía', cost: 5000 },
+    { id: 'reward_4', name: 'Sándwich del día', cost: 7500 },
+];
+
+const loyaltyProgramDetails = "El programa tiene tres niveles: Bronce (0-4999 pts), Plata (5000-9999 pts) y Oro (10000+ pts). Las recompensas incluyen bebidas gratis, descuentos y ofertas exclusivas.";
+
+
+// Tool definitions
+const getCustomerInfo = ai.defineTool(
+    {
+      name: 'getCustomerInfo',
+      description: 'Obtiene la información del cliente actual, como su nombre, nivel de lealtad y saldo de puntos.',
+      inputSchema: z.object({}),
+      outputSchema: z.object({
+        name: z.string(),
+        tier: z.string(),
+        points: z.number(),
+      }),
+    },
+    async () => {
+      // In a real app, you would fetch this from your database
+      return mockCustomer;
+    }
+);
+
+const getAvailableRewards = ai.defineTool(
+    {
+        name: 'getAvailableRewards',
+        description: 'Obtiene una lista de todas las recompensas disponibles y su costo en puntos.',
+        inputSchema: z.object({}),
+        outputSchema: z.array(z.object({
+            id: z.string(),
+            name: z.string(),
+            cost: z.number(),
+        })),
+    },
+    async () => {
+        // In a real app, you would fetch this from your database
+        return mockRewards;
+    }
+);
+
+const redeemReward = ai.defineTool(
+    {
+        name: 'redeemReward',
+        description: 'Canjea una recompensa para el cliente, descontando el costo de los puntos del cliente.',
+        inputSchema: z.object({
+            rewardId: z.string().describe('El ID de la recompensa a canjear.'),
+        }),
+        outputSchema: z.object({
+            success: z.boolean(),
+            message: z.string(),
+            remainingPoints: z.number().optional(),
+        }),
+    },
+    async ({ rewardId }) => {
+        const reward = mockRewards.find(r => r.id === rewardId);
+        if (!reward) {
+            return { success: false, message: 'Recompensa no encontrada.' };
+        }
+        if (mockCustomer.points < reward.cost) {
+            return { success: false, message: `No tienes suficientes puntos. Necesitas ${reward.cost} puntos, pero tienes ${mockCustomer.points}.` };
+        }
+        // In a real app, you would update the customer's points in the database
+        mockCustomer.points -= reward.cost;
+        return { success: true, message: `¡Has canjeado "${reward.name}" con éxito!`, remainingPoints: mockCustomer.points };
+    }
+);
+
+
 const LoyaltyProgramAssistantInputSchema = z.object({
   query: z.string().describe('La consulta del usuario sobre el programa de lealtad.'),
-  loyaltyProgramDetails: z.string().describe('Detalles sobre el programa de lealtad, incluidas las reglas, los beneficios y las recompensas disponibles.'),
-  customerInformation: z.string().describe('Información sobre el cliente, incluido su saldo de puntos, nivel e historial de compras.'),
 });
 export type LoyaltyProgramAssistantInput = z.infer<typeof LoyaltyProgramAssistantInputSchema>;
 
@@ -33,18 +111,21 @@ const prompt = ai.definePrompt({
   name: 'loyaltyProgramAssistantPrompt',
   input: {schema: LoyaltyProgramAssistantInputSchema},
   output: {schema: LoyaltyProgramAssistantOutputSchema},
-  prompt: `Eres un asistente virtual para un programa de lealtad. Tu objetivo es responder las preguntas de los usuarios y resolver problemas comunes relacionados con el programa.
+  tools: [getCustomerInfo, getAvailableRewards, redeemReward],
+  prompt: `Eres un asistente virtual amigable y altamente competente para un programa de lealtad. Tu objetivo es responder las preguntas de los usuarios y resolver problemas comunes relacionados con el programa de lealtad, utilizando las herramientas proporcionadas cuando sea necesario.
 
   Aquí están los detalles del programa de lealtad:
-  {{loyaltyProgramDetails}}
+  ${loyaltyProgramDetails}
 
-  Aquí hay información sobre el cliente:
-  {{customerInformation}}
+  Utiliza las herramientas para obtener información específica del cliente o del programa cuando la necesites para responder. No inventes información sobre puntos, nivel, o recompensas; usa siempre las herramientas para obtener datos precisos.
+  
+  Si un usuario quiere realizar una acción, como canjear una recompensa, usa la herramienta apropiada y confirma el resultado.
+  
+  Siempre sé claro, conciso y servicial.
 
   Ahora, responde a la siguiente consulta del usuario:
-  {{query}}
-
-  Proporcione una respuesta clara, concisa y útil. Si el usuario solicita realizar una acción que no es posible, explique por qué no es posible.`,
+  {{{query}}}
+  `,
 });
 
 const loyaltyProgramAssistantFlow = ai.defineFlow(
