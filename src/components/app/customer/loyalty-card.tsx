@@ -14,12 +14,13 @@ import {
 import { Star, Loader } from "lucide-react";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase/client";
-import { doc, getDoc, collection, getDocs, query, where, limit } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import type { Customer } from "@/components/app/admin/customer-management";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { Program } from "@/components/app/admin/program-management";
 
+// In a real production app, this should be an environment variable
 const WALLET_FUNCTION_URL = "https://us-central1-senku-loyalty.cloudfunctions.net/generateWalletPass";
 
 interface LoyaltyCardProps {
@@ -47,33 +48,33 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
         const tenantsSnapshot = await getDocs(tenantsCollection);
         let foundCustomer: Customer | null = null;
         let foundTenantId: string | null = null;
+        let foundProgram: Program | null = null;
 
         for (const tenantDoc of tenantsSnapshot.docs) {
           const customerRef = doc(db, 'tenants', tenantDoc.id, 'customers', customerId);
           const customerSnap = await getDoc(customerRef);
+          
           if (customerSnap.exists()) {
             foundCustomer = { id: customerSnap.id, ...customerSnap.data() } as Customer;
             foundTenantId = tenantDoc.id;
-            break;
+            
+            // Once customer is found, get their associated program
+            const programId = (foundCustomer as any).programId;
+            if (programId) {
+                const programRef = doc(db, "tenants", foundTenantId, "programs", programId);
+                const programSnap = await getDoc(programRef);
+                if (programSnap.exists()) {
+                    foundProgram = { id: programSnap.id, ...programSnap.data() } as Program;
+                }
+            }
+            break; // Stop searching once the customer is found
           }
         }
         
         if (foundCustomer && foundTenantId) {
           setCustomer(foundCustomer);
           setTenantId(foundTenantId);
-
-          const programId = (foundCustomer as any).programId;
-          if (programId) {
-            const programRef = doc(db, "tenants", foundTenantId, "programs", programId);
-            const programSnap = await getDoc(programRef);
-            if (programSnap.exists()) {
-              setProgram({ id: programSnap.id, ...programSnap.data() } as Program);
-            }
-          } else {
-             // Fallback program if not specified
-             setProgram({ id: 'fallback', name: 'Programa de Lealtad', type: 'Puntos', status: 'Activo', members: 0, created: '' });
-          }
-
+          setProgram(foundProgram);
         } else {
           console.log("No such customer!");
         }
@@ -97,6 +98,7 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
     }
 
     try {
+        const programDesign = (program as any).design || {};
         const response = await fetch(WALLET_FUNCTION_URL, {
             method: 'POST',
             headers: {
@@ -108,12 +110,9 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
                 customerPoints: customer.points,
                 customerTier: customer.tier,
                 programName: program.name,
-                // Pass tenantId to wallet function if needed for branding etc.
-                tenantId: tenantId,
-                // Values from program design
-                logoText: (program as any).design?.logoText || "Senku Lealtad",
-                backgroundColor: (program as any).design?.backgroundColor || "#2962FF",
-                foregroundColor: (program as any).design?.foregroundColor || "#FFFFFF",
+                logoText: programDesign.logoText || "Senku Lealtad",
+                backgroundColor: programDesign.backgroundColor || "#2962FF",
+                foregroundColor: programDesign.foregroundColor || "#FFFFFF",
             }),
         });
         

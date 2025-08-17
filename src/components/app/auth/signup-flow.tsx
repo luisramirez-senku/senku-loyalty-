@@ -333,7 +333,7 @@ export default function SignupFlow() {
                     {step === 3 && (
                         <Button type="submit" className="w-full" disabled={loading}>
                             {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
-                            Registrarse
+                            Completar Registro
                         </Button>
                     )}
                 </CardFooter>

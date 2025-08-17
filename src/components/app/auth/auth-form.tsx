@@ -33,8 +33,8 @@ const loginSchema = z.object({
     email: z.string().email({
       message: "Por favor, introduce una dirección de correo electrónico válida.",
     }),
-    password: z.string().min(6, {
-      message: "La contraseña debe tener al menos 6 caracteres.",
+    password: z.string().min(1, {
+      message: "La contraseña es requerida.",
     }),
   });
 

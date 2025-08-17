@@ -2,11 +2,11 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, getDoc, query } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import LoyaltyCard from "./loyalty-card";
 import VirtualAssistant from "./virtual-assistant";
-import { Gift, Loader, History } from "lucide-react";
+import { Gift, History } from "lucide-react";
 import {
   Card,
   CardContent,

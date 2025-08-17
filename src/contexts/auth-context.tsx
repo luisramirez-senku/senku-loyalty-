@@ -50,11 +50,12 @@ const createNewTenant = async (tenantId: string, businessName: string, adminEmai
         }
     };
 
-    await setDoc(tenantRef, tenantData);
+    // Create the tenant and the first admin user in a batch to ensure atomicity
+    const batch = writeBatch(db);
+    batch.set(tenantRef, tenantData);
 
-    // Also create the first admin user inside the tenant's subcollection
     const adminUserRef = doc(db, "tenants", tenantId, "users", tenantId);
-    await setDoc(adminUserRef, {
+    batch.set(adminUserRef, {
         name: businessName,
         email: adminEmail,
         role: "Admin",
@@ -62,6 +63,8 @@ const createNewTenant = async (tenantId: string, businessName: string, adminEmai
         lastLogin: new Date().toLocaleDateString(),
         initials: businessName.split(' ').map(n => n[0]).join('').toUpperCase()
     });
+
+    await batch.commit();
 }
 
 // Function to seed initial data for the demo account
@@ -112,7 +115,7 @@ const seedInitialData = async (tenantId: string, businessName: string, adminEmai
         batch.set(customerRef, {...customerData, programId: programRef.id});
     });
 
-    // 4. Create demo users
+    // 4. Create demo users (excluding the admin who is already created)
     const usersData = [
         { name: "Juan Cajero", email: "juan.cajero@example.com", role: "Cajero", status: "Activo", lastLogin: "2024-05-21", initials: "JC" },
         { name: "Maria Gerente", email: "maria.gerente@example.com", role: "Gerente", status: "Activo", lastLogin: "2024-05-20", initials: "MG" },

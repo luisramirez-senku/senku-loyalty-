@@ -118,91 +118,110 @@ export default function ProgramManagement() {
           </Button>
         </Link>
       </div>
-      <TooltipProvider>
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {loading ? (
-            Array.from({ length: 3 }).map((_, i) => (
-                <Card key={i}>
-                    <CardHeader>
-                        <Skeleton className="h-6 w-3/4" />
-                        <Skeleton className="h-4 w-1/4" />
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <Skeleton className="h-5 w-20" />
-                        <Skeleton className="h-4 w-1/2" />
-                    </CardContent>
-                    <CardFooter className="flex-col items-start gap-2 pt-4 border-t">
-                        <Skeleton className="h-4 w-1/2" />
-                        <Skeleton className="h-3 w-1/3" />
-                    </CardFooter>
-                </Card>
-            ))
+
+       {loading ? (
+        <TooltipProvider>
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <Card key={i}>
+                        <CardHeader>
+                            <Skeleton className="h-6 w-3/4" />
+                            <Skeleton className="h-4 w-1/4 mt-1" />
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <Skeleton className="h-5 w-20" />
+                            <Skeleton className="h-4 w-1/2" />
+                        </CardContent>
+                        <CardFooter className="flex-col items-start gap-2 pt-4 border-t">
+                            <Skeleton className="h-4 w-1/2" />
+                            <Skeleton className="h-3 w-1/3" />
+                        </CardFooter>
+                    </Card>
+                ))}
+            </div>
+        </TooltipProvider>
+        ) : programs.length > 0 ? (
+        <TooltipProvider>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {programs.map((program) => (
+              <Card key={program.id} className="flex flex-col">
+                  <CardHeader>
+                  <div className="flex justify-between items-start">
+                      <CardTitle>{program.name}</CardTitle>
+                      <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                              <MoreHorizontal className="h-4 w-4" />
+                              <span className="sr-only">Menú de palanca</span>
+                          </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                              <DropdownMenuItem asChild>
+                                  <Link href={`/admin/programs/${program.id}`}>Editar</Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                  <Link href={`/admin/programs/${program.id}`}>Ver detalles</Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {program.status !== 'Archivado' ? (
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(program.id, 'Archivado')}>
+                                      <Archive className="mr-2 h-4 w-4" />
+                                      Archivar
+                                  </DropdownMenuItem>
+                              ) : (
+                                  <DropdownMenuItem onClick={() => handleUpdateStatus(program.id, 'Activo')}>
+                                      <ArchiveRestore className="mr-2 h-4 w-4" />
+                                      Restaurar
+                                  </DropdownMenuItem>
+                              )}
+                          </DropdownMenuContent>
+                      </DropdownMenu>
+                  </div>
+                  <CardDescription>
+                      <div className="flex items-center gap-2 text-sm">
+                          <TypeIcon type={program.type} />
+                          <span>{program.type}</span>
+                      </div>
+                  </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-1 space-y-4">
+                  <Badge variant={program.status === 'Activo' ? 'default' : program.status === 'Borrador' ? 'outline' : 'secondary'}>{program.status}</Badge>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Users className="h-4 w-4" />
+                          <span>{program.members.toLocaleString()} miembros</span>
+                  </div>
+                  </CardContent>
+                  <CardFooter className="flex-col items-start gap-2 pt-4 border-t">
+                      <Link href={`/register/${program.id}?tenant=${user?.uid}`} passHref>
+                          <Button variant="link" className="p-0 h-auto">
+                              <LinkIcon className="h-4 w-4 mr-2" />
+                              Enlace de registro
+                          </Button>
+                      </Link>
+                      <p className="text-xs text-muted-foreground">
+                          Creado el {program.created}
+                      </p>
+                  </CardFooter>
+              </Card>
+              ))}
+          </div>
+        </TooltipProvider>
         ) : (
-            programs.map((program) => (
-            <Card key={program.id} className="flex flex-col">
+            <Card className="text-center py-16">
                 <CardHeader>
-                <div className="flex justify-between items-start">
-                    <CardTitle>{program.name}</CardTitle>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Menú de palanca</span>
-                        </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                            <DropdownMenuItem asChild>
-                                <Link href="/admin/programs/new">Editar</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href={`/admin/programs/${program.id}`}>Ver detalles</Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            {program.status !== 'Archivado' ? (
-                                <DropdownMenuItem onClick={() => handleUpdateStatus(program.id, 'Archivado')}>
-                                    <Archive className="mr-2 h-4 w-4" />
-                                    Archivar
-                                </DropdownMenuItem>
-                            ) : (
-                                <DropdownMenuItem onClick={() => handleUpdateStatus(program.id, 'Activo')}>
-                                    <ArchiveRestore className="mr-2 h-4 w-4" />
-                                    Restaurar
-                                </DropdownMenuItem>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-                <CardDescription>
-                    <div className="flex items-center gap-2 text-sm">
-                        <TypeIcon type={program.type} />
-                        <span>{program.type}</span>
-                    </div>
-                </CardDescription>
+                    <CardTitle>Crea tu primer programa de lealtad</CardTitle>
+                    <CardDescription>Atrae y retén a tus clientes con recompensas personalizadas.</CardDescription>
                 </CardHeader>
-                <CardContent className="flex-1 space-y-4">
-                <Badge variant={program.status === 'Activo' ? 'default' : program.status === 'Borrador' ? 'outline' : 'secondary'}>{program.status}</Badge>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Users className="h-4 w-4" />
-                        <span>{program.members.toLocaleString()} miembros</span>
-                </div>
-                </CardContent>
-                <CardFooter className="flex-col items-start gap-2 pt-4 border-t">
-                    <Link href={`/register/${program.id}?tenant=${user?.uid}`} passHref>
-                        <Button variant="link" className="p-0 h-auto">
-                            <LinkIcon className="h-4 w-4 mr-2" />
-                            Enlace de registro
+                <CardContent>
+                    <Link href="/admin/programs/new" passHref>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Crear Programa
                         </Button>
                     </Link>
-                    <p className="text-xs text-muted-foreground">
-                        Creado el {program.created}
-                    </p>
-                </CardFooter>
+                </CardContent>
             </Card>
-            ))
         )}
-      </div>
-      </TooltipProvider>
     </div>
   );
 }

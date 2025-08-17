@@ -2,7 +2,7 @@
 "use client";
 
 import React from "react";
-import { BarChart, LineChart, Users, Star, ShoppingCart, Percent, UserCheck, UserPlus, TrendingUp } from "lucide-react";
+import { Users, UserCheck, TrendingUp, ShoppingCart } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -25,6 +25,7 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   ComposedChart,
+  BarChart
 } from "recharts";
 import type { ChartConfig } from "@/components/ui/chart";
 
@@ -165,17 +166,17 @@ export default function AnalyticsDashboard() {
             <div className="space-y-8">
               <div className="flex items-center">
                  <div className="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10">
-                    <UserPlus className="h-5 w-5 text-primary" />
+                    <ShoppingCart className="h-5 w-5 text-primary" />
                 </div>
                 <div className="ml-4 space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    Olivia Martin se ha unido
+                    Olivia Martin
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    olivia.martin@email.com
+                    Compra en tienda física.
                   </p>
                 </div>
-                <div className="ml-auto font-medium text-muted-foreground">Hoy</div>
+                <div className="ml-auto font-medium">+$99.00</div>
               </div>
               <div className="flex items-center">
                 <div className="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10">
@@ -205,17 +206,19 @@ export default function AnalyticsDashboard() {
                 </div>
                 <div className="ml-auto font-medium">+$150.00</div>
               </div>
-              <div className="flex items-center">
+               <div className="flex items-center">
                 <div className="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10">
-                    <UserPlus className="h-5 w-5 text-primary" />
+                    <ShoppingCart className="h-5 w-5 text-primary" />
                 </div>
                 <div className="ml-4 space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    William Kim se ha unido
+                    William Kim
                   </p>
-                  <p className="text-sm text-muted-foreground">will@email.com</p>
+                   <p className="text-sm text-muted-foreground">
+                    Compra en la tienda
+                  </p>
                 </div>
-                <div className="ml-auto font-medium text-muted-foreground">Ayer</div>
+                <div className="ml-auto font-medium">+$78.20</div>
               </div>
               <div className="flex items-center">
                 <div className="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10">

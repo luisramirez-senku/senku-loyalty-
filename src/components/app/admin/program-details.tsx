@@ -68,9 +68,16 @@ const recentTransactions = [
 
 export default function ProgramDetails({ program }: ProgramDetailsProps) {
   const { user } = useAuth();
-  const registrationUrl = `/register/${program.id}?tenant=${user?.uid}`;
-  // Asumimos un dominio base para generar el QR completo, en producción se obtendría del entorno
-  const fullRegistrationUrl = `${window.location.origin}${registrationUrl}`;
+  const [fullRegistrationUrl, setFullRegistrationUrl] = useState("");
+
+  // We need to build the URL on the client side to access window.location.origin
+  React.useEffect(() => {
+    if (user) {
+        const registrationUrl = `/register/${program.id}?tenant=${user.uid}`;
+        setFullRegistrationUrl(`${window.location.origin}${registrationUrl}`);
+    }
+  }, [user, program.id]);
+
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(fullRegistrationUrl)}`;
 
   return (
@@ -107,10 +114,10 @@ export default function ProgramDetails({ program }: ProgramDetailsProps) {
                     <Users className="h-4 w-4" />
                     <span>{program.members.toLocaleString()} miembros</span>
                 </div>
-                 <Link href={registrationUrl} passHref>
+                 <Link href={fullRegistrationUrl} passHref>
                     <Button variant="link" className="p-0 h-auto">
                         <LinkIcon className="h-4 w-4 mr-2" />
-                        {registrationUrl}
+                        {fullRegistrationUrl}
                     </Button>
                 </Link>
             </CardContent>
@@ -127,9 +134,9 @@ export default function ProgramDetails({ program }: ProgramDetailsProps) {
                 <CardDescription>Use este QR para que los clientes se registren fácilmente.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center gap-4">
-                <Image src={qrCodeUrl} alt="Código QR de registro" width={200} height={200} className="rounded-lg border p-1" />
-                 <Button asChild>
-                    <a href={qrCodeUrl} download={`qr-registro-${program.id}.png`}>
+                {fullRegistrationUrl && <Image src={qrCodeUrl} alt="Código QR de registro" width={200} height={200} className="rounded-lg border p-1" />}
+                 <Button asChild disabled={!fullRegistrationUrl}>
+                    <a href={fullRegistrationUrl ? qrCodeUrl : '#'} download={`qr-registro-${program.id}.png`}>
                         Descargar QR
                     </a>
                 </Button>
@@ -219,7 +226,7 @@ export default function ProgramDetails({ program }: ProgramDetailsProps) {
             <CardContent className="space-y-4">
                 {recentMembers.map((member, index) => (
                      <div key={index} className="flex items-center gap-4">
-                        <Avatar className="h-10 w-10">
+                        <Avatar className="h-10 w-10" data-ai-hint="person portrait">
                             <AvatarImage src={`https://placehold.co/40x40.png?text=${member.initials}`} alt={member.name} />
                             <AvatarFallback>{member.initials}</AvatarFallback>
                         </Avatar>
