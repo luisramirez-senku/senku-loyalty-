@@ -104,13 +104,13 @@ const seedInitialData = async (userId: string, userName: string, userEmail: stri
     await batch.commit();
 }
 
+const auth = getAuth(app);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const auth = getAuth(app);
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
@@ -120,12 +120,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = (email: string, pass: string) => {
-    const auth = getAuth(app);
     return signInWithEmailAndPassword(auth, email, pass);
   };
 
   const signup = async (email: string, pass: string, name: string) => {
-    const auth = getAuth(app);
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     if (userCredential.user) {
         // After user is created in Auth, seed their Firestore data
@@ -135,7 +133,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
-    const auth = getAuth(app);
     return signOut(auth);
   };
 
