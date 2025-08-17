@@ -12,20 +12,12 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { db } from "@/lib/firebase/client";
+import { collection, doc, getDoc, getDocs, updateDoc, writeBatch } from "firebase/firestore";
+import type { Customer } from "@/components/app/admin/customer-management";
 
-// Mock Data - In a real app, this would come from a database.
-const mockCustomer = {
-    name: 'Charles Webb',
-    tier: 'Oro',
-    points: 25000,
-};
-
-const mockRewards = [
-    { id: 'reward_1', name: 'Café o Té Gratis', cost: 1500 },
-    { id: 'reward_2', name: 'Pastel Gratis', cost: 2500 },
-    { id: 'reward_3', name: '20% de Descuento en Mercancía', cost: 5000 },
-    { id: 'reward_4', name: 'Sándwich del día', cost: 7500 },
-];
+// Para la demo, obtenemos un cliente específico. En una app real, esto vendría de la sesión del usuario.
+const CUSTOMER_ID_DEMO = "bAsz8Nn9EaN5Sg2v3j0K";
 
 const loyaltyProgramDetails = "El programa tiene tres niveles: Bronce (0-4999 pts), Plata (5000-9999 pts) y Oro (10000+ pts). Las recompensas incluyen bebidas gratis, descuentos y ofertas exclusivas.";
 
@@ -43,10 +35,25 @@ const getCustomerInfo = ai.defineTool(
       }),
     },
     async () => {
-      // In a real app, you would fetch this from your database
-      return mockCustomer;
+      const docRef = doc(db, "customers", CUSTOMER_ID_DEMO);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const customer = docSnap.data() as Customer;
+        return {
+            name: customer.name,
+            tier: customer.tier,
+            points: customer.points
+        }
+      }
+      throw new Error("Cliente no encontrado.");
     }
 );
+
+type Reward = {
+    id: string;
+    name: string;
+    cost: number;
+}
 
 const getAvailableRewards = ai.defineTool(
     {
@@ -60,8 +67,25 @@ const getAvailableRewards = ai.defineTool(
         })),
     },
     async () => {
-        // In a real app, you would fetch this from your database
-        return mockRewards;
+        // En una app real, esto podría estar cacheado.
+        const rewardsSnapshot = await getDocs(collection(db, "rewards"));
+        if (rewardsSnapshot.empty) {
+            // Seed rewards if they don't exist
+            const batch = writeBatch(db);
+            const initialRewards = [
+                { id: 'reward_1', name: 'Café o Té Gratis', cost: 1500 },
+                { id: 'reward_2', name: 'Pastel Gratis', cost: 2500 },
+                { id: 'reward_3', name: '20% de Descuento en Mercancía', cost: 5000 },
+                { id: 'reward_4', name: 'Sándwich del día', cost: 7500 },
+            ];
+            initialRewards.forEach(reward => {
+                const rewardRef = doc(db, "rewards", reward.id);
+                batch.set(rewardRef, reward);
+            });
+            await batch.commit();
+            return initialRewards;
+        }
+        return rewardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reward));
     }
 );
 
@@ -79,16 +103,32 @@ const redeemReward = ai.defineTool(
         }),
     },
     async ({ rewardId }) => {
-        const reward = mockRewards.find(r => r.id === rewardId);
-        if (!reward) {
+        const customerRef = doc(db, "customers", CUSTOMER_ID_DEMO);
+        const customerSnap = await getDoc(customerRef);
+
+        if (!customerSnap.exists()) {
+            return { success: false, message: 'Cliente no encontrado.' };
+        }
+        const customer = customerSnap.data() as Customer;
+        
+        const rewardRef = doc(db, "rewards", rewardId);
+        const rewardSnap = await getDoc(rewardRef);
+
+        if (!rewardSnap.exists()) {
             return { success: false, message: 'Recompensa no encontrada.' };
         }
-        if (mockCustomer.points < reward.cost) {
-            return { success: false, message: `No tienes suficientes puntos. Necesitas ${reward.cost} puntos, pero tienes ${mockCustomer.points}.` };
+        const reward = rewardSnap.data() as Reward;
+
+        if (customer.points < reward.cost) {
+            return { success: false, message: `No tienes suficientes puntos. Necesitas ${reward.cost} puntos, pero tienes ${customer.points}.` };
         }
-        // In a real app, you would update the customer's points in the database
-        mockCustomer.points -= reward.cost;
-        return { success: true, message: `¡Has canjeado "${reward.name}" con éxito!`, remainingPoints: mockCustomer.points };
+        
+        const newTotalPoints = customer.points - reward.cost;
+        await updateDoc(customerRef, {
+            points: newTotalPoints
+        });
+        
+        return { success: true, message: `¡Has canjeado "${reward.name}" con éxito!`, remainingPoints: newTotalPoints };
     }
 );
 
