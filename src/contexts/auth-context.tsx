@@ -9,7 +9,8 @@ import {
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
     signOut,
-    UserCredential
+    UserCredential,
+    Auth
 } from 'firebase/auth';
 import { app, db } from '@/lib/firebase/client';
 import { Loader } from 'lucide-react';
@@ -60,7 +61,13 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const auth = getAuth(app);
+let auth: Auth;
+try {
+  auth = getAuth(app);
+} catch (error) {
+  console.error("Error initializing Firebase Auth:", error);
+}
+
 
 // Function to seed data for a new user
 const seedInitialData = async (userId: string, userName: string, userEmail: string) => {
@@ -144,7 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout,
   };
 
-  if (loading) {
+  if (loading || !auth) {
     return (
         <div className="flex h-screen w-full items-center justify-center">
             <Loader className="h-8 w-8 animate-spin" />
