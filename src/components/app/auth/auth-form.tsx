@@ -38,71 +38,50 @@ const loginSchema = z.object({
     }),
   });
 
-const signupSchema = z.object({
-  name: z.string().min(2, "El nombre del negocio es requerido."),
-  email: z.string().email({
-    message: "Por favor, introduce una dirección de correo electrónico válida.",
-  }),
-  password: z.string().min(6, {
-    message: "La contraseña debe tener al menos 6 caracteres.",
-  }),
-});
-
 
 interface AuthFormProps {
-  mode: "login" | "signup";
+  mode: "login";
 }
 
 export default function AuthForm({ mode }: AuthFormProps) {
   const [loading, setLoading] = useState(false);
-  const { login, signup } = useAuth();
+  const { login } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
 
-  const title = mode === "login" ? "Iniciar Sesión" : "Crear una Cuenta";
-  const description = mode === "login"
-    ? "Ingresa tus credenciales para acceder a tu panel."
-    : "Completa el formulario para registrar un nuevo negocio.";
-  const buttonText = mode === "login" ? "Iniciar Sesión" : "Crear Cuenta y Entorno Demo";
-  const footerText = mode === "login"
-    ? "¿No tienes una cuenta?"
-    : "¿Ya tienes una cuenta?";
-  const footerLink = mode === "login" ? "/signup" : "/login";
-  const footerLinkText = mode === "login" ? "Regístrate" : "Inicia Sesión";
+  const title = "Iniciar Sesión";
+  const description = "Ingresa tus credenciales para acceder a tu panel.";
+  const buttonText = "Iniciar Sesión";
+  const footerText = "¿No tienes una cuenta?";
+  const footerLink = "/signup";
+  const footerLinkText = "Regístrate";
 
-  const form = useForm<z.infer<typeof loginSchema | typeof signupSchema>>({
-    resolver: zodResolver(mode === 'login' ? loginSchema : signupSchema),
+  const form = useForm<z.infer<typeof loginSchema>>({
+    resolver: zodResolver(loginSchema),
     defaultValues: {
       email: "",
       password: "",
-      ...(mode === 'signup' && { name: '' }),
     },
   });
 
-  async function onSubmit(values: z.infer<typeof loginSchema | typeof signupSchema>) {
+  async function onSubmit(values: z.infer<typeof loginSchema>) {
     setLoading(true);
     try {
-      if (mode === "login") {
-        const { email, password } = values as z.infer<typeof loginSchema>;
-        await login(email, password);
-      } else {
-        const { email, password, name } = values as z.infer<typeof signupSchema>;
-        await signup(email, password, name);
-      }
+        await login(values.email, values.password);
       toast({
-        title: mode === "login" ? "¡Bienvenido de vuelta!" : "¡Entorno Demo Creado!",
+        title: "¡Bienvenido de vuelta!",
         description: "Serás redirigido a tu panel.",
       });
-      // Redirect to admin panel after successful login/signup
+      // Redirect to admin panel after successful login
       router.push("/admin"); 
     } catch (error: any) {
       console.error("Error de autenticación:", error);
       const errorCode = error.code;
       let errorMessage = "Ocurrió un error. Por favor, inténtalo de nuevo.";
-      if (errorCode === 'auth/email-already-in-use') {
-        errorMessage = "Este correo electrónico ya está registrado. Por favor, inicia sesión.";
-      } else if (errorCode === 'auth/wrong-password' || errorCode === 'auth/user-not-found' || errorCode === 'auth/invalid-credential') {
+      if (errorCode === 'auth/wrong-password' || errorCode === 'auth/user-not-found' || errorCode === 'auth/invalid-credential') {
         errorMessage = "Correo electrónico o contraseña incorrectos.";
+      } else if (errorCode === 'auth/email-already-in-use') {
+        errorMessage = "Este correo electrónico ya está registrado. Por favor, inicia sesión.";
       }
       toast({
         variant: "destructive",
@@ -128,21 +107,6 @@ export default function AuthForm({ mode }: AuthFormProps) {
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-             {mode === 'signup' && (
-                <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Nombre del Negocio</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Ej: Mi Cafetería Favorita" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-              )}
               <FormField
                 control={form.control}
                 name="email"
@@ -163,14 +127,12 @@ export default function AuthForm({ mode }: AuthFormProps) {
                   <FormItem>
                     <div className="flex justify-between items-center">
                       <FormLabel>Contraseña</FormLabel>
-                       {mode === 'login' && (
                         <Link
                           href="/forgot-password"
                           className="text-sm font-medium text-primary hover:underline"
                         >
                           ¿Olvidaste tu contraseña?
                         </Link>
-                      )}
                     </div>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} />
