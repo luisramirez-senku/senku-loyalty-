@@ -31,17 +31,6 @@ export default function Home() {
           </Link>
         </CardContent>
       </Card>
-        <div className="mt-8 text-center">
-            <p className="text-muted-foreground mb-2">¿Eres un cliente final?</p>
-            <div className="flex gap-4 justify-center">
-                 <Link href="/customer" passHref>
-                    <Button variant="link">Accede a tu panel</Button>
-                </Link>
-                 <Link href="/register/demo" passHref>
-                    <Button variant="link">Únete a un programa</Button>
-                </Link>
-            </div>
-        </div>
     </div>
   );
 }
