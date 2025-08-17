@@ -18,6 +18,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import Link from "next/link";
 
 const programs = [
   {
@@ -80,9 +81,11 @@ export default function ProgramManagement() {
                 Cree y gestione sus programas de lealtad.
             </p>
         </div>
-        <Button>
-          <PlusCircle className="mr-2 h-4 w-4" /> Crear Programa
-        </Button>
+        <Link href="/admin/programs/new" passHref>
+          <Button>
+            <PlusCircle className="mr-2 h-4 w-4" /> Crear Programa
+          </Button>
+        </Link>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {programs.map((program, index) => (
