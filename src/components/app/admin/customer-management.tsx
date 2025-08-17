@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import type { DateRange } from "react-day-picker";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -85,15 +86,25 @@ const customerSegments = ["Alto valor", "Comprador frecuente", "Nuevo miembro", 
 export default function CustomerManagement() {
     const [filteredCustomers, setFilteredCustomers] = useState(customers);
     const [segmentFilter, setSegmentFilter] = useState<string>("");
-    const [dateFilter, setDateFilter] = useState<Date | undefined>(undefined);
+    const [dateFilter, setDateFilter] = useState<DateRange | undefined>(undefined);
 
-    const applyFilters = (segment: string, date?: Date) => {
+    const applyFilters = (segment: string, dateRange?: DateRange) => {
         let updatedCustomers = customers;
         if (segment) {
             updatedCustomers = updatedCustomers.filter(c => c.segment === segment);
         }
-        if (date) {
-            updatedCustomers = updatedCustomers.filter(c => new Date(c.joined) >= date);
+        if (dateRange?.from) {
+            updatedCustomers = updatedCustomers.filter(c => {
+                const joinedDate = new Date(c.joined);
+                const fromDate = new Date(dateRange.from!);
+                fromDate.setHours(0,0,0,0);
+                if (dateRange.to) {
+                    const toDate = new Date(dateRange.to);
+                    toDate.setHours(23,59,59,999);
+                    return joinedDate >= fromDate && joinedDate <= toDate;
+                }
+                return joinedDate >= fromDate;
+            });
         }
         setFilteredCustomers(updatedCustomers);
     }
@@ -103,9 +114,9 @@ export default function CustomerManagement() {
         applyFilters(segment, dateFilter);
     }
 
-    const handleDateChange = (date?: Date) => {
-        setDateFilter(date);
-        applyFilters(segmentFilter, date);
+    const handleDateChange = (dateRange?: DateRange) => {
+        setDateFilter(dateRange);
+        applyFilters(segmentFilter, dateRange);
     }
     
     const clearFilters = () => {
@@ -148,20 +159,32 @@ export default function CustomerManagement() {
                     <Button
                         variant={"outline"}
                         className={cn(
-                        "w-full md:w-[240px] justify-start text-left font-normal",
+                        "w-full md:w-[300px] justify-start text-left font-normal",
                         !dateFilter && "text-muted-foreground"
                         )}
                     >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {dateFilter ? format(dateFilter, "PPP") : <span>Filtrar por fecha</span>}
+                        {dateFilter?.from ? (
+                            dateFilter.to ? (
+                                <>
+                                {format(dateFilter.from, "LLL dd, y")} -{" "}
+                                {format(dateFilter.to, "LLL dd, y")}
+                                </>
+                            ) : (
+                                format(dateFilter.from, "LLL dd, y")
+                            )
+                            ) : (
+                            <span>Filtrar por fecha</span>
+                        )}
                     </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                     <Calendar
-                        mode="single"
+                        mode="range"
                         selected={dateFilter}
                         onSelect={handleDateChange}
                         initialFocus
+                        numberOfMonths={2}
                     />
                     </PopoverContent>
                 </Popover>
