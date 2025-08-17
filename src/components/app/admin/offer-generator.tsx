@@ -18,7 +18,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
@@ -29,15 +28,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader, Sparkles, Tag } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Loader, Sparkles, Tag, Send } from "lucide-react";
+import { customerSegments } from "./customer-management";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from "@/components/ui/select"
+
 
 const formSchema = z.object({
-  customerId: z.string().min(1, "Se requiere la ID del cliente."),
-  purchaseHistory: z.string().min(1, "Se requiere el historial de compras."),
-  loyaltyTier: z.string().min(1, "Se requiere el nivel de lealtad."),
-  pointsBalance: z.coerce.number().min(0, "El saldo de puntos debe ser un número positivo."),
-  preferences: z.string().min(1, "Se requieren las preferencias."),
+  customerSegment: z.string().min(1, "Se requiere el segmento de clientes."),
+  campaignGoal: z.string().min(1, "Se requiere el objetivo de la campaña."),
 });
 
 export default function OfferGenerator() {
@@ -49,11 +53,8 @@ export default function OfferGenerator() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      customerId: "CUST-007",
-      purchaseHistory: "Compras frecuentes de café y pasteles, ocasionalmente compra mercancía.",
-      loyaltyTier: "Oro",
-      pointsBalance: 12500,
-      preferences: "Le gusta probar nuevas mezclas de café, interesado en descuentos en mercancía.",
+      customerSegment: "En riesgo",
+      campaignGoal: "Reactivar clientes que no han comprado en los últimos 90 días con una oferta de alto valor.",
     },
   });
 
@@ -79,98 +80,67 @@ export default function OfferGenerator() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">
-          Generador de ofertas personalizadas
+          Generador de Campañas de Ofertas
         </h2>
       </div>
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
         <Card className="lg:col-span-2 h-fit">
           <CardHeader>
-            <CardTitle>Detalles del cliente</CardTitle>
+            <CardTitle>Definir Campaña</CardTitle>
             <CardDescription>
-              Ingrese la información del cliente para generar ofertas a medida.
+              Seleccione un segmento y describa el objetivo para generar ideas de ofertas.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
-                  control={form.control}
-                  name="customerId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>ID de cliente</FormLabel>
-                      <FormControl>
-                        <Input placeholder="p.ej., CUST-12345" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                    control={form.control}
+                    name="customerSegment"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Segmento de Clientes</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar un segmento" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {customerSegments.map(segment => (
+                                    <SelectItem key={segment} value={segment}>{segment}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
                 />
                 <FormField
                   control={form.control}
-                  name="purchaseHistory"
+                  name="campaignGoal"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Historial de compras</FormLabel>
+                      <FormLabel>Objetivo de la Campaña</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="p.ej., Compra café todas las mañanas..."
+                          placeholder="Ej: Premiar a nuestros clientes más leales con un descuento exclusivo."
                           {...field}
+                          rows={3}
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                <FormField
-                  control={form.control}
-                  name="loyaltyTier"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Nivel de lealtad</FormLabel>
-                      <FormControl>
-                        <Input placeholder="p.ej., Oro, Plata, Bronce" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="pointsBalance"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Saldo de puntos</FormLabel>
-                      <FormControl>
-                        <Input type="number" placeholder="p.ej., 5000" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="preferences"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Preferencias</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="p.ej., Prefiere descuentos en comida..."
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+
                 <Button type="submit" disabled={loading} className="w-full">
                   {loading ? (
                     <Loader className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
                     <Sparkles className="mr-2 h-4 w-4" />
                   )}
-                  Generar ofertas
+                  Generar Ideas de Oferta
                 </Button>
               </form>
             </Form>
@@ -179,9 +149,9 @@ export default function OfferGenerator() {
         <div className="lg:col-span-3">
           <Card className="sticky top-20">
             <CardHeader>
-              <CardTitle>Ofertas sugeridas</CardTitle>
+              <CardTitle>Ideas de Campaña Sugeridas</CardTitle>
               <CardDescription>
-                Ofertas generadas por IA adaptadas al cliente.
+                Ofertas generadas por IA para el segmento y objetivo seleccionados.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 max-h-[70vh] overflow-y-auto">
@@ -200,18 +170,24 @@ export default function OfferGenerator() {
                       </CardTitle>
                       <CardDescription>{offer.offerDescription}</CardDescription>
                     </CardHeader>
+                    <CardContent>
+                        <p className="text-sm text-muted-foreground italic">"{offer.promotionalText}"</p>
+                    </CardContent>
                     <CardFooter className="flex justify-between items-center text-sm">
-                      <Badge variant="secondary">{offer.discountCode}</Badge>
-                      <span className="text-muted-foreground">
-                        Expira: {offer.expirationDate}
-                      </span>
+                       <Button size="sm">
+                            <Send className="mr-2 h-4 w-4" />
+                            Lanzar campaña
+                       </Button>
+                       <span className="font-mono text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                         CODE: {offer.discountCode}
+                       </span>
                     </CardFooter>
                   </Card>
                 ))
               ) : (
                 !loading && (
                   <div className="text-center text-muted-foreground py-16">
-                    <p>Las ofertas generadas aparecerán aquí.</p>
+                    <p>Las ideas de campaña generadas aparecerán aquí.</p>
                   </div>
                 )
               )}

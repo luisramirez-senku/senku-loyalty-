@@ -1,10 +1,10 @@
 'use server';
 
 /**
- * @fileOverview This file defines a Genkit flow for generating personalized offer suggestions for loyalty program customers.
+ * @fileOverview This file defines a Genkit flow for generating personalized offer campaigns for customer segments.
  *
  * It includes:
- * - `generatePersonalizedOffers`: An async function that takes customer data and returns personalized offer suggestions.
+ * - `generatePersonalizedOffers`: An async function that takes a customer segment and campaign goal and returns offer suggestions.
  * - `GeneratePersonalizedOffersInput`: The input type for the `generatePersonalizedOffers` function.
  * - `GeneratePersonalizedOffersOutput`: The output type for the `generatePersonalizedOffers` function.
  */
@@ -13,23 +13,20 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const GeneratePersonalizedOffersInputSchema = z.object({
-  customerId: z.string().describe('El identificador único para el cliente.'),
-  purchaseHistory: z.string().describe('Un resumen de las compras pasadas del cliente.'),
-  loyaltyTier: z.string().describe('El nivel actual del programa de lealtad del cliente (por ejemplo, Bronce, Plata, Oro).'),
-  pointsBalance: z.number().describe('El saldo actual de puntos de lealtad del cliente.'),
-  preferences: z.string().describe('Las preferencias del cliente.'),
+  customerSegment: z.string().describe('El segmento de clientes al que se dirige la campaña (por ejemplo, Clientes en riesgo, Miembros VIP).'),
+  campaignGoal: z.string().describe('El objetivo principal de la campaña de ofertas (por ejemplo, Reactivar clientes, Premiar la lealtad).'),
 });
 export type GeneratePersonalizedOffersInput = z.infer<typeof GeneratePersonalizedOffersInputSchema>;
 
 const GeneratePersonalizedOffersOutputSchema = z.object({
   offers: z.array(
     z.object({
-      offerName: z.string().describe('El nombre de la oferta personalizada.'),
-      offerDescription: z.string().describe('Una descripción detallada de la oferta.'),
-      discountCode: z.string().describe('El código de descuento asociado a la oferta.'),
-      expirationDate: z.string().describe('La fecha de vencimiento de la oferta (AAAA-MM-DD).'),
+      offerName: z.string().describe('El nombre de la oferta o campaña.'),
+      offerDescription: z.string().describe('Una descripción detallada de la oferta, explicando el beneficio para el cliente.'),
+      promotionalText: z.string().describe('Un texto promocional corto y atractivo para usar en notificaciones o correos electrónicos.'),
+      discountCode: z.string().describe('Un código de descuento de ejemplo asociado a la oferta.'),
     })
-  ).describe('Una lista de sugerencias de ofertas personalizadas para el cliente.'),
+  ).describe('Una lista de sugerencias de ofertas y campañas personalizadas para el segmento de clientes.'),
 });
 export type GeneratePersonalizedOffersOutput = z.infer<typeof GeneratePersonalizedOffersOutputSchema>;
 
@@ -41,20 +38,20 @@ const prompt = ai.definePrompt({
   name: 'generatePersonalizedOffersPrompt',
   input: {schema: GeneratePersonalizedOffersInputSchema},
   output: {schema: GeneratePersonalizedOffersOutputSchema},
-  prompt: `Eres un experto en programas de lealtad, hábil en la creación de sugerencias de ofertas personalizadas para clientes.
+  prompt: `Eres un experto en marketing y programas de lealtad, hábil en la creación de campañas de ofertas para segmentos de clientes específicos.
 
-  Basado en la siguiente información sobre el cliente, genera una lista de ofertas atractivas y relevantes:
+  Basado en el siguiente segmento de clientes y objetivo de la campaña, genera una lista de 3 ideas de ofertas creativas y relevantes.
 
-  ID de cliente: {{{customerId}}}
-  Historial de compras: {{{purchaseHistory}}}
-  Nivel de lealtad: {{{loyaltyTier}}}
-  Saldo de puntos: {{{pointsBalance}}}
-  Preferencias: {{{preferences}}}
+  Segmento de Clientes: {{{customerSegment}}}
+  Objetivo de la Campaña: {{{campaignGoal}}}
 
-  Considera su historial de compras, nivel de lealtad, saldo de puntos y preferencias para crear ofertas que los incentiven a realizar compras adicionales y a interactuar más con el programa de lealtad.
-  Las ofertas generadas deben ser específicas y atractivas para el cliente individual.
-  Asegúrate de generar un código de descuento único para cada oferta.
-  Proporciona la fecha de hoy y agrega 30 días para la fecha de vencimiento de cada oferta (AAAA-MM-DD).
+  Para cada idea, proporciona:
+  1. Un nombre de oferta atractivo.
+  2. Una descripción clara de los beneficios para el cliente.
+  3. Un texto promocional corto y convincente.
+  4. Un código de descuento de ejemplo.
+
+  Asegúrate de que las ofertas estén alineadas con el objetivo y sean atractivas para el segmento de clientes especificado.
   `,
 });
 
