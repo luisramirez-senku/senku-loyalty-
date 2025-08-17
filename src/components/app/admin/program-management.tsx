@@ -1,5 +1,7 @@
+
 "use client";
 
+import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -10,18 +12,30 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, CreditCard, Star, Percent, Users, Link as LinkIcon } from "lucide-react";
+import { MoreHorizontal, PlusCircle, CreditCard, Star, Percent, Users, Link as LinkIcon, Archive, ArchiveRestore } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const programs = [
+type ProgramStatus = "Activo" | "Borrador" | "Archivado";
+
+type Program = {
+    id: string;
+    name: string;
+    type: "Puntos" | "Sellos" | "Cashback";
+    status: ProgramStatus;
+    members: number;
+    created: string;
+};
+
+const initialPrograms: Program[] = [
   {
     id: "prog_1",
     name: "Programa de Puntos Premium",
@@ -78,6 +92,13 @@ const TypeIcon = ({ type }: { type: string }) => {
 }
 
 export default function ProgramManagement() {
+  const [programs, setPrograms] = useState<Program[]>(initialPrograms);
+
+  const handleUpdateStatus = (programId: string, status: ProgramStatus) => {
+    setPrograms(programs.map(p => p.id === programId ? { ...p, status } : p));
+  };
+
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
@@ -95,8 +116,8 @@ export default function ProgramManagement() {
       </div>
       <TooltipProvider>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {programs.map((program, index) => (
-          <Card key={index} className="flex flex-col">
+        {programs.map((program) => (
+          <Card key={program.id} className="flex flex-col">
             <CardHeader>
               <div className="flex justify-between items-start">
                 <CardTitle>{program.name}</CardTitle>
@@ -108,10 +129,21 @@ export default function ProgramManagement() {
                     </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                    <DropdownMenuItem>Editar</DropdownMenuItem>
-                    <DropdownMenuItem>Ver detalles</DropdownMenuItem>
-                    <DropdownMenuItem>Archivar</DropdownMenuItem>
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem>Editar</DropdownMenuItem>
+                        <DropdownMenuItem>Ver detalles</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {program.status !== 'Archivado' ? (
+                            <DropdownMenuItem onClick={() => handleUpdateStatus(program.id, 'Archivado')}>
+                                <Archive className="mr-2 h-4 w-4" />
+                                Archivar
+                            </DropdownMenuItem>
+                        ) : (
+                            <DropdownMenuItem onClick={() => handleUpdateStatus(program.id, 'Activo')}>
+                                <ArchiveRestore className="mr-2 h-4 w-4" />
+                                Restaurar
+                            </DropdownMenuItem>
+                        )}
                     </DropdownMenuContent>
                 </DropdownMenu>
               </div>
