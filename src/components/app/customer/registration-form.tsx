@@ -29,6 +29,8 @@ import Link from "next/link";
 import { useState } from "react";
 import { Loader } from "lucide-react";
 import Image from "next/image";
+import { db } from "@/lib/firebase/client";
+import { collection, addDoc } from "firebase/firestore";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -59,19 +61,41 @@ export default function CustomerRegistrationForm({ programId }: { programId: str
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
-    console.log("Formulario de registro enviado:", { ...values, programId });
-    
-    // Simulate API call
-    setTimeout(() => {
+    try {
+        const initials = values.name.split(' ').map(n => n[0]).join('').toUpperCase();
+        const customerData = {
+            name: values.name,
+            email: values.email,
+            phone: values.phone || '',
+            cedula: values.cedula || '',
+            programId: programId,
+            tier: 'Bronce',
+            points: 0,
+            segment: 'Nuevo miembro',
+            joined: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+            initials: initials,
+            history: [],
+        };
+
+        await addDoc(collection(db, "customers"), customerData);
+        
         toast({
             title: "¡Registro exitoso!",
             description: "Bienvenido al programa de lealtad.",
         });
-        setLoading(false);
         setSubmitted(true);
-    }, 1500);
+    } catch (error) {
+        console.error("Error al registrar el cliente:", error);
+        toast({
+            variant: "destructive",
+            title: "Error en el registro",
+            description: "No se pudo completar el registro. Por favor, inténtalo de nuevo.",
+        });
+    } finally {
+        setLoading(false);
+    }
   }
 
   if (submitted) {
