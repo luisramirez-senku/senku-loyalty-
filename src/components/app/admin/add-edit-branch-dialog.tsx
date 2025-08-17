@@ -87,6 +87,12 @@ export function AddEditBranchDialog({
     }
   }, [isOpen, branch, form]);
 
+  useEffect(() => {
+    if (loadError) {
+      toast({ variant: "destructive", title: "Error de Google Maps", description: "No se pudo cargar la API de Google Maps. Verifique su clave de API en las variables de entorno." });
+    }
+  }, [loadError, toast]);
+
   const onLoad = (ref: google.maps.places.SearchBox) => setSearchBox(ref);
 
   const onPlacesChanged = () => {
@@ -113,10 +119,6 @@ export function AddEditBranchDialog({
         id: branch?.id,
         ...values,
     });
-  }
-
-  if (loadError) {
-      toast({ variant: "destructive", title: "Error", description: "No se pudo cargar Google Maps. Verifique su clave de API." });
   }
 
   return (
@@ -160,7 +162,7 @@ export function AddEditBranchDialog({
                     />
                      <div>
                         <FormLabel>Buscar Dirección en el Mapa</FormLabel>
-                        {isLoaded && (
+                        {isLoaded && !loadError && (
                             <StandaloneSearchBox onLoad={onLoad} onPlacesChanged={onPlacesChanged}>
                                 <Input type="text" placeholder="Buscar ubicación..." className="mt-2" />
                             </StandaloneSearchBox>
@@ -169,7 +171,7 @@ export function AddEditBranchDialog({
                 </div>
 
                 <div>
-                    {isLoaded ? (
+                    {isLoaded && !loadError ? (
                          <GoogleMap
                             mapContainerStyle={containerStyle}
                             center={currentMarkerPosition}
@@ -191,7 +193,7 @@ export function AddEditBranchDialog({
            
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={!isLoaded}>{isEditing ? "Guardar Cambios" : "Crear Sucursal"}</Button>
+              <Button type="submit" disabled={!isLoaded || loadError}>{isEditing ? "Guardar Cambios" : "Crear Sucursal"}</Button>
             </DialogFooter>
           </form>
         </Form>
