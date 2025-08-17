@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import Logo from "@/components/app/shared/logo";
 import { ArrowRight, Check, Sparkles, Star, Users, CreditCard, Bot, Palette, Workflow, X, BrainCircuit } from "lucide-react";
 import Image from "next/image";
+import { LanguageSwitcher } from "@/components/app/shared/language-switcher";
 
 const whySenkuFeatures = [
     {
@@ -120,6 +121,7 @@ export default function Home() {
                 <span className="font-bold">Senku Lealtad</span>
             </Link>
             <div className="flex flex-1 items-center justify-end gap-2">
+                 <LanguageSwitcher />
                  <Button variant="ghost" asChild>
                     <Link href="/login">Iniciar Sesión</Link>
                 </Button>
