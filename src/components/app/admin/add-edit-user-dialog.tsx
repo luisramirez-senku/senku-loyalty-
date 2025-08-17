@@ -36,7 +36,7 @@ interface AddEditUserDialogProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
   user: User | null;
-  onSave: (user: User) => void;
+  onSave: (data: Omit<User, 'id' | 'initials' | 'lastLogin' | 'status'> & { id?: string }) => void;
 }
 
 const formSchema = z.object({
@@ -70,11 +70,9 @@ export function AddEditUserDialog({
   }, [isOpen, user, form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    const initials = values.name.split(' ').map(n => n[0]).join('');
     onSave({
-        ...(user || { id: '', status: 'Activo', lastLogin: 'Nunca', initials: ''}),
+        id: user?.id,
         ...values,
-        initials,
     });
   }
 

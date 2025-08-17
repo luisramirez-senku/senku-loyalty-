@@ -1,7 +1,9 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -30,6 +32,9 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AddEditUserDialog } from "./add-edit-user-dialog";
 import { DeactivateUserDialog } from "./deactivate-user-dialog";
+import { toast } from "@/hooks/use-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+
 
 export type UserRole = "Cajero" | "Gerente" | "Admin";
 export type UserStatus = "Activo" | "Inactivo";
@@ -45,54 +50,33 @@ export type User = {
     initials: string;
 };
 
-const initialUsers: User[] = [
-  {
-    id: "user_1",
-    name: "Alex Chen",
-    email: "alex.chen@senku.com",
-    role: "Cajero",
-    status: "Activo",
-    lastLogin: "2024-05-21 09:15 AM",
-    avatar: "https://placehold.co/40x40.png",
-    initials: "AC"
-  },
-  {
-    id: "user_2",
-    name: "Brenda Rodriguez",
-    email: "brenda.r@senku.com",
-    role: "Cajero",
-    status: "Activo",
-    lastLogin: "2024-05-21 08:55 AM",
-    avatar: "https://placehold.co/40x40.png",
-    initials: "BR"
-  },
-  {
-    id: "user_3",
-    name: "Charles Webb",
-    email: "charles.w@senku.com",
-    role: "Gerente",
-    status: "Activo",
-    lastLogin: "2024-05-20 05:30 PM",
-    avatar: "https://placehold.co/40x40.png",
-    initials: "CW"
-  },
-  {
-    id: "user_4",
-    name: "Diana Prince",
-    email: "diana.p@senku.com",
-    role: "Cajero",
-    status: "Inactivo",
-    lastLogin: "2024-04-10 11:00 AM",
-    avatar: "https://placehold.co/40x40.png",
-    initials: "DP"
-  },
-];
-
 export default function UserManagement() {
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isAddEditOpen, setAddEditOpen] = useState(false);
   const [isDeactivateOpen, setDeactivateOpen] = useState(false);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+        setLoading(true);
+        try {
+            const querySnapshot = await getDocs(collection(db, "users"));
+            const usersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+            setUsers(usersData);
+        } catch (error) {
+            console.error("Error fetching users:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudieron cargar los usuarios.",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+    fetchUsers();
+  }, []);
 
   const handleOpenDialog = (user?: User) => {
     setSelectedUser(user || null);
@@ -104,22 +88,53 @@ export default function UserManagement() {
     setDeactivateOpen(true);
   };
 
-  const handleSaveUser = (user: User) => {
-    if (selectedUser) {
-      setUsers(users.map(u => u.id === user.id ? user : u));
-    } else {
-      setUsers([...users, { ...user, id: `user_${Date.now()}` }]);
+  const handleSaveUser = async (userData: Omit<User, 'id' | 'initials' | 'lastLogin'> & { id?: string }) => {
+    try {
+        if (userData.id) { // Editing existing user
+            const userRef = doc(db, "users", userData.id);
+            const { id, ...dataToUpdate } = userData;
+            await updateDoc(userRef, dataToUpdate);
+
+            const updatedUser = { ...users.find(u => u.id === id)!, ...dataToUpdate };
+            setUsers(users.map(u => u.id === id ? updatedUser : u));
+            toast({ title: "Usuario Actualizado", description: "Los datos del usuario han sido guardados." });
+        } else { // Adding new user
+            const initials = userData.name.split(' ').map(n => n[0]).join('').toUpperCase();
+            const newUserDoc = {
+                ...userData,
+                initials,
+                status: 'Activo' as UserStatus,
+                lastLogin: 'Nunca',
+            };
+            const docRef = await addDoc(collection(db, "users"), newUserDoc);
+            const newUser = { ...newUserDoc, id: docRef.id };
+            setUsers([...users, newUser]);
+            toast({ title: "Usuario Agregado", description: "El nuevo usuario ha sido creado." });
+        }
+        setAddEditOpen(false);
+    } catch (error) {
+        console.error("Error guardando el usuario:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el usuario." });
     }
-    setAddEditOpen(false);
   };
 
-  const handleToggleStatus = (userId: string) => {
-    setUsers(users.map(u => 
-        u.id === userId 
-        ? { ...u, status: u.status === 'Activo' ? 'Inactivo' : 'Activo' } 
-        : u
-    ));
-    setDeactivateOpen(false);
+  const handleToggleStatus = async (userId: string) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
+    try {
+        const newStatus = user.status === 'Activo' ? 'Inactivo' : 'Activo';
+        const userRef = doc(db, "users", userId);
+        await updateDoc(userRef, { status: newStatus });
+
+        setUsers(users.map(u => u.id === userId ? { ...u, status: newStatus } : u));
+        toast({ title: "Estado Actualizado", description: `El usuario ha sido ${newStatus.toLowerCase()}.` });
+    } catch (error) {
+        console.error("Error al actualizar estado:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar el estado del usuario." });
+    } finally {
+        setDeactivateOpen(false);
+    }
   };
 
   return (
@@ -157,52 +172,76 @@ export default function UserManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
-                  <TableRow key={user.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                          <Avatar className="hidden h-9 w-9 sm:flex" data-ai-hint="person portrait">
-                              <AvatarImage src={user.avatar} alt="Avatar" />
-                              <AvatarFallback>{user.initials}</AvatarFallback>
-                          </Avatar>
-                          <div className="grid gap-1">
-                              <p className="text-sm font-medium leading-none">{user.name}</p>
-                              <p className="text-sm text-muted-foreground">{user.email}</p>
-                          </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>
-                      <Badge variant={user.status === 'Activo' ? 'default' : 'secondary'}>{user.status}</Badge>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {user.lastLogin}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button aria-haspopup="true" size="icon" variant="ghost">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Menú de palanca</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleOpenDialog(user)}>Editar</DropdownMenuItem>
-                          <DropdownMenuItem>Restablecer contraseña</DropdownMenuItem>
-                          <DropdownMenuItem 
-                            onClick={() => handleOpenDeactivateDialog(user)}
-                            className={user.status === 'Activo' ? 'text-destructive' : ''}
-                          >
-                            {user.status === 'Activo' ? 'Desactivar' : 'Activar'}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {loading ? (
+                    Array.from({ length: 4 }).map((_, i) => (
+                        <TableRow key={i}>
+                            <TableCell>
+                                <div className="flex items-center gap-3">
+                                    <Skeleton className="h-9 w-9 rounded-full" />
+                                    <div className="space-y-1">
+                                        <Skeleton className="h-4 w-24" />
+                                        <Skeleton className="h-3 w-32" />
+                                    </div>
+                                </div>
+                            </TableCell>
+                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                            <TableCell><Skeleton className="h-6 w-20 rounded-full" /></TableCell>
+                            <TableCell className="hidden md:table-cell"><Skeleton className="h-4 w-28" /></TableCell>
+                            <TableCell><Skeleton className="h-8 w-8" /></TableCell>
+                        </TableRow>
+                    ))
+                ) : (
+                    users.map((user) => (
+                    <TableRow key={user.id}>
+                        <TableCell>
+                        <div className="flex items-center gap-3">
+                            <Avatar className="hidden h-9 w-9 sm:flex" data-ai-hint="person portrait">
+                                <AvatarImage src={user.avatar} alt="Avatar" />
+                                <AvatarFallback>{user.initials}</AvatarFallback>
+                            </Avatar>
+                            <div className="grid gap-1">
+                                <p className="text-sm font-medium leading-none">{user.name}</p>
+                                <p className="text-sm text-muted-foreground">{user.email}</p>
+                            </div>
+                        </div>
+                        </TableCell>
+                        <TableCell>{user.role}</TableCell>
+                        <TableCell>
+                        <Badge variant={user.status === 'Activo' ? 'default' : 'secondary'}>{user.status}</Badge>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                        {user.lastLogin}
+                        </TableCell>
+                        <TableCell>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                                <MoreHorizontal className="h-4 w-4" />
+                                <span className="sr-only">Menú de palanca</span>
+                            </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                            <DropdownMenuItem onClick={() => handleOpenDialog(user)}>Editar</DropdownMenuItem>
+                            <DropdownMenuItem 
+                                onClick={() => handleOpenDeactivateDialog(user)}
+                                className={user.status === 'Activo' ? 'text-destructive' : ''}
+                            >
+                                {user.status === 'Activo' ? 'Desactivar' : 'Activar'}
+                            </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        </TableCell>
+                    </TableRow>
+                    ))
+                )}
               </TableBody>
             </Table>
+             {!loading && users.length === 0 && (
+                <div className="text-center p-8 text-muted-foreground">
+                    No se encontraron usuarios.
+                </div>
+            )}
           </CardContent>
         </Card>
       </div>
