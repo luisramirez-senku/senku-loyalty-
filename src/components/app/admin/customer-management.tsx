@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Star, CalendarDays, Users, Calendar as CalendarIcon, FilterX } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Star, CalendarDays, Users, Calendar as CalendarIcon, FilterX, Info } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +32,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 const customers = [
   {
@@ -82,6 +83,15 @@ const customers = [
 ];
 
 const customerSegments = ["Alto valor", "Comprador frecuente", "Nuevo miembro", "VIP", "En riesgo"];
+
+const segmentDescriptions: Record<string, string> = {
+    "Alto valor": "Clientes que gastan significativamente más que el promedio.",
+    "Comprador frecuente": "Clientes que realizan compras de forma regular.",
+    "Nuevo miembro": "Clientes que se han unido recientemente al programa de lealtad.",
+    "VIP": "Los clientes más valiosos que reciben beneficios exclusivos.",
+    "En riesgo": "Clientes que no han realizado una compra en un tiempo y podrían abandonar el programa.",
+};
+
 
 export default function CustomerManagement() {
     const [filteredCustomers, setFilteredCustomers] = useState(customers);
@@ -198,6 +208,7 @@ export default function CustomerManagement() {
         </CardHeader>
     </Card>
 
+    <TooltipProvider>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {filteredCustomers.map((customer, index) => (
             <Card key={index} className="flex flex-col">
@@ -241,6 +252,14 @@ export default function CustomerManagement() {
                         <div className="flex items-center gap-2">
                             <Users className="h-4 w-4" />
                             <span>Segmento: {customer.segment}</span>
+                            <Tooltip>
+                                <TooltipTrigger>
+                                    <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>{segmentDescriptions[customer.segment]}</p>
+                                </TooltipContent>
+                            </Tooltip>
                         </div>
                         <div className="flex items-center gap-2">
                            <CalendarDays className="h-4 w-4" />
@@ -251,6 +270,7 @@ export default function CustomerManagement() {
             </Card>
         ))}
       </div>
+      </TooltipProvider>
       {filteredCustomers.length === 0 && (
           <div className="text-center text-muted-foreground py-16">
               <p>No se encontraron clientes que coincidan con los filtros seleccionados.</p>
