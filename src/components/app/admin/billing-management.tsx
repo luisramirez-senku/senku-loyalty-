@@ -140,13 +140,17 @@ export default function BillingManagement() {
     setSelectedPlan(newPlan);
   }
 
-  const handleSubscriptionSuccess = async (newPlan: Plan) => {
+  const handleSubscriptionSuccess = async (newPlan: Plan, subscriptionID: string) => {
     if (!user || !tenant) return;
     setIsUpdating(true);
     try {
         const tenantRef = doc(db, "tenants", user.uid);
         // If user was in trial, their status is now active
-        await updateDoc(tenantRef, { plan: newPlan, status: "Activo" });
+        await updateDoc(tenantRef, { 
+            plan: newPlan, 
+            status: "Activo",
+            paypalSubscriptionId: subscriptionID, // Store PayPal subscription ID
+         });
         setTenant({ ...tenant, plan: newPlan, status: "Activo" });
         setSelectedPlan(null); // Hide PayPal buttons
         toast({ title: "¡Suscripción exitosa!", description: `Has cambiado al plan ${newPlan}.` });
@@ -162,26 +166,15 @@ export default function BillingManagement() {
     const createSubscription = (data: any, actions: any) => {
         const planId = paypalPlanIds[newPlan];
         
-        const subscriptionDetails: any = {
+        let subscriptionDetails: any = {
             plan_id: planId,
         };
 
         if (tenant?.status === 'Prueba' && daysLeft && daysLeft > 0) {
-           subscriptionDetails.plan = {
-                billing_info: {
-                    outstanding_balance: {
-                        value: "0",
-                        currency_code: "USD"
-                    }
-                },
-                payment_preferences: {
-                    auto_bill_outstanding: true,
-                },
-                trial_period: {
-                    tenure_type: "DAY",
-                    interval_count: 14
-                }
-            };
+            subscriptionDetails = {
+                ...subscriptionDetails,
+                start_time: new Date(new Date().setDate(new Date().getDate() + daysLeft)).toISOString().split('.')[0] + 'Z',
+            }
         }
 
         return actions.subscription.create(subscriptionDetails);
@@ -190,7 +183,7 @@ export default function BillingManagement() {
     const onApprove = async (data: any, actions: any) => {
         toast({ title: "Procesando suscripción...", description: "Por favor espera." });
         // The subscription is approved, now update the app's database
-        await handleSubscriptionSuccess(newPlan);
+        await handleSubscriptionSuccess(newPlan, data.subscriptionID);
     };
     
     const onError = (err: any) => {
