@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import Logo from "@/components/app/shared/logo";
-import { ArrowRight, Check, Sparkles, Star, Users, CreditCard, Bot, Palette, Workflow, X } from "lucide-react";
+import { ArrowRight, Check, Sparkles, Star, Users, CreditCard, Bot, Palette, Workflow, X, BrainCircuit } from "lucide-react";
 import Image from "next/image";
 
 const whySenkuFeatures = [
@@ -24,16 +24,24 @@ const whySenkuFeatures = [
     },
 ]
 
-const comparisonData = [
-    { feature: "Pases de Wallet Digitales", senku: true, boomerang: true },
-    { feature: "Programas de Puntos, Sellos y Cashback", senku: true, boomerang: true },
-    { feature: "Asistente Virtual con IA", senku: true, boomerang: false },
-    { feature: "Generador de Ofertas con IA", senku: true, boomerang: false },
-    { feature: "Automatizaciones de Marketing", senku: true, boomerang: false },
-    { feature: "Segmentación Avanzada de Clientes", senku: true, boomerang: true },
-    { feature: "Panel de Análisis Completo", senku: true, boomerang: false },
-    { feature: "API para Integraciones", senku: "Próximamente", boomerang: true },
+const aiFeatures = [
+    {
+        title: "Generador de Ofertas Inteligentes",
+        description: "Describe tu objetivo y a quién te diriges. Nuestra IA analiza el segmento de clientes y genera campañas de ofertas personalizadas y creativas que realmente convierten.",
+        image: "https://placehold.co/600x400.png"
+    },
+    {
+        title: "Asistente de Redacción de Marketing",
+        description: "Crea textos atractivos para notificaciones push y correos electrónicos. Simplemente proporciona los detalles de la oferta y la IA generará un mensaje optimizado para maximizar la participación.",
+        image: "https://placehold.co/600x400.png"
+    },
+    {
+        title: "Asistente Virtual para Clientes 24/7",
+        description: "Ofrece a tus clientes un asistente virtual que puede responder a sus preguntas sobre el programa de fidelización, consultar su saldo de puntos e incluso canjear recompensas por ellos.",
+        image: "https://placehold.co/600x400.png"
+    }
 ]
+
 
 const pricingPlans = [
     {
@@ -166,33 +174,29 @@ export default function Home() {
             </div>
         </section>
         
-        {/* Comparison Section */}
-        <section id="comparison" className="py-20">
+        {/* AI Section */}
+        <section id="ai-features" className="py-20">
             <div className="container mx-auto">
-                <div className="text-center mb-12">
-                    <h2 className="text-3xl md:text-4xl font-bold">Más que una Alternativa</h2>
-                    <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">BoomerangMe es una gran herramienta. Senku Lealtad es una plataforma de crecimiento completa.</p>
+                <div className="text-center mb-16">
+                    <h2 className="text-3xl md:text-4xl font-bold flex items-center justify-center gap-3">
+                        <BrainCircuit className="h-10 w-10 text-primary" />
+                        Un Cerebro de IA para tu Marketing
+                    </h2>
+                    <p className="text-muted-foreground mt-4 max-w-3xl mx-auto">Nuestra IA no es un truco. Es tu socio estratégico para entender, atraer y deleitar a tus clientes de maneras que antes eran imposibles.</p>
                 </div>
-                <Card className="max-w-4xl mx-auto">
-                    <CardContent className="p-0">
-                         <div className="grid grid-cols-3 divide-x divide-border">
-                            <div className="p-4 font-semibold">Característica</div>
-                            <div className="p-4 font-semibold text-center flex items-center justify-center gap-2"><Logo className="h-5 w-5 text-primary"/> Senku</div>
-                            <div className="p-4 font-semibold text-center">BoomerangMe</div>
-                         </div>
-                         {comparisonData.map((item, index) => (
-                            <div key={index} className="grid grid-cols-3 divide-x divide-border border-t">
-                                <div className="p-4 text-muted-foreground">{item.feature}</div>
-                                <div className="p-4 text-center flex justify-center items-center">
-                                    {item.senku === true ? <Check className="h-6 w-6 text-green-500" /> : item.senku === false ? <X className="h-6 w-6 text-destructive" /> : <span className="text-xs text-muted-foreground">{item.senku}</span>}
-                                </div>
-                                <div className="p-4 text-center flex justify-center items-center">
-                                    {item.boomerang === true ? <Check className="h-6 w-6 text-green-500" /> : item.boomerang === false ? <X className="h-6 w-6 text-destructive" /> : <span className="text-xs text-muted-foreground">{item.boomerang}</span>}
-                                </div>
+                <div className="space-y-20">
+                    {aiFeatures.map((feature, index) => (
+                        <div key={feature.title} className={`grid md:grid-cols-2 gap-10 items-center ${index % 2 !== 0 ? 'md:grid-flow-col-dense' : ''}`}>
+                            <div className={`${index % 2 !== 0 ? 'md:col-start-2' : ''}`}>
+                                <h3 className="text-2xl font-bold mb-4">{feature.title}</h3>
+                                <p className="text-muted-foreground text-lg">{feature.description}</p>
                             </div>
-                         ))}
-                    </CardContent>
-                </Card>
+                            <div className={`rounded-xl overflow-hidden ${index % 2 !== 0 ? 'md:col-start-1' : ''}`} data-ai-hint="abstract ai graphic">
+                                <Image src={feature.image} alt={feature.title} width={600} height={400} className="w-full h-full object-cover" />
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
         </section>
 
