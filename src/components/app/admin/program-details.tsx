@@ -11,10 +11,10 @@ import {
   CardFooter
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CreditCard, DollarSign, Percent, Star, Users, Link as LinkIcon, QrCode } from "lucide-react";
+import { ArrowLeft, CreditCard, DollarSign, Link as LinkIcon, Percent, QrCode, Star, Users } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
+import Image from "next/image";
 
 // Extiende el tipo Program para incluir los detalles que podríamos tener.
 interface ProgramDetailsProps {
@@ -50,6 +50,11 @@ const TypeIcon = ({ type }: { type: string }) => {
 
 
 export default function ProgramDetails({ program }: ProgramDetailsProps) {
+  const registrationUrl = `/register/${program.id}`;
+  // Asumimos un dominio base para generar el QR completo, en producción se obtendría del entorno
+  const fullRegistrationUrl = `https://app.senku.com${registrationUrl}`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(fullRegistrationUrl)}`;
+
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center gap-4">
@@ -68,7 +73,7 @@ export default function ProgramDetails({ program }: ProgramDetailsProps) {
       </div>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card>
             <CardHeader>
                 <CardTitle>Información General</CardTitle>
                 <CardDescription>{program.description || 'No hay descripción disponible.'}</CardDescription>
@@ -84,10 +89,10 @@ export default function ProgramDetails({ program }: ProgramDetailsProps) {
                     <Users className="h-4 w-4" />
                     <span>{program.members.toLocaleString()} miembros</span>
                 </div>
-                 <Link href={`/register/${program.id}`} passHref>
+                 <Link href={registrationUrl} passHref>
                     <Button variant="link" className="p-0 h-auto">
                         <LinkIcon className="h-4 w-4 mr-2" />
-                        /register/{program.id}
+                        {registrationUrl}
                     </Button>
                 </Link>
             </CardContent>
@@ -96,6 +101,21 @@ export default function ProgramDetails({ program }: ProgramDetailsProps) {
                     Creado el {program.created}
                 </p>
             </CardFooter>
+        </Card>
+
+        <Card className="row-span-2">
+            <CardHeader>
+                <CardTitle>Enlace de registro con QR</CardTitle>
+                <CardDescription>Use este QR para que los clientes se registren fácilmente.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center justify-center gap-4">
+                <Image src={qrCodeUrl} alt="Código QR de registro" width={200} height={200} className="rounded-lg border p-1" />
+                 <Button asChild>
+                    <a href={qrCodeUrl} download={`qr-registro-${program.id}.png`}>
+                        Descargar QR
+                    </a>
+                </Button>
+            </CardContent>
         </Card>
 
         <Card>
