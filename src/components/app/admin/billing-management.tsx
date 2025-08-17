@@ -18,7 +18,8 @@ import { Check, Loader, Rocket } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { PayPalButtons } from "@paypal/react-paypal-js";
+import { PayPalButtons, PayPalScriptProvider } from "@paypal/react-paypal-js";
+
 
 type Plan = "Esencial" | "Crecimiento" | "Empresarial";
 type TenantStatus = "Prueba" | "Activo" | "Cancelado";
@@ -94,6 +95,7 @@ export default function BillingManagement() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [daysLeft, setDaysLeft] = useState<number | null>(null);
+  const paypalClientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "";
 
   useEffect(() => {
     const fetchTenantData = async () => {
@@ -160,30 +162,25 @@ export default function BillingManagement() {
     const createSubscription = (data: any, actions: any) => {
         const planId = paypalPlanIds[newPlan];
         
-        // This is where we configure the trial period
         const subscriptionDetails: any = {
             plan_id: planId,
         };
 
         if (tenant?.status === 'Prueba' && daysLeft && daysLeft > 0) {
-            subscriptionDetails.plan = {
-                billing_cycles: [{
-                    tenure_type: "TRIAL",
-                    sequence: 1,
-                    total_cycles: 1,
-                    pricing_scheme: {
-                        fixed_price: {
-                            value: "0",
-                            currency_code: "USD"
-                        }
+           subscriptionDetails.plan = {
+                billing_info: {
+                    outstanding_balance: {
+                        value: "0",
+                        currency_code: "USD"
                     }
                 },
-                {
-                    tenure_type: "REGULAR",
-                    sequence: 2,
-                    // This should match the plan settings in PayPal
-                    total_cycles: 0, 
-                }]
+                payment_preferences: {
+                    auto_bill_outstanding: true,
+                },
+                trial_period: {
+                    tenure_type: "DAY",
+                    interval_count: 14
+                }
             };
         }
 
@@ -205,15 +202,21 @@ export default function BillingManagement() {
         });
     }
 
+    if (!paypalClientId || paypalClientId === "YOUR_PAYPAL_CLIENT_ID") {
+        return <p className="text-destructive text-sm mt-4">La integración de PayPal no está configurada. Por favor, añade tu Client ID de PayPal en el archivo .env.</p>
+    }
+
     return (
         <div className="mt-4 animate-in fade-in-50">
-            <PayPalButtons
-                key={newPlan}
-                createSubscription={createSubscription}
-                onApprove={onApprove}
-                onError={onError}
-                style={{ layout: 'vertical', label: 'subscribe' }}
-            />
+            <PayPalScriptProvider options={{ clientId: paypalClientId, intent: "subscription", vault: true }}>
+                <PayPalButtons
+                    key={newPlan}
+                    createSubscription={createSubscription}
+                    onApprove={onApprove}
+                    onError={onError}
+                    style={{ layout: 'vertical', label: 'subscribe' }}
+                />
+            </PayPalScriptProvider>
         </div>
     );
 };
@@ -305,7 +308,7 @@ export default function BillingManagement() {
                     ))}
                     </ul>
                 </CardContent>
-                <CardFooter className="flex-col">
+                <CardFooter className="flex-col items-start w-full">
                     {tenant?.plan === plan.name ? (
                         <Button className="w-full" size="lg" disabled>
                             Plan Actual
