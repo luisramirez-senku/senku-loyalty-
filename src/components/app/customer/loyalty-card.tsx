@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import Logo from "../shared/logo";
 import { Star, Loader } from "lucide-react";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase/client";
@@ -21,11 +20,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import type { Program } from "@/components/app/admin/program-management";
 
-// Para la demo, obtenemos un cliente específico. En una app real, esto vendría de la sesión del usuario.
-const CUSTOMER_ID_DEMO = "bAsz8Nn9EaN5Sg2v3j0K";
 const WALLET_FUNCTION_URL = "https://us-central1-senku-loyalty.cloudfunctions.net/generateWalletPass";
 
-export default function LoyaltyCard() {
+interface LoyaltyCardProps {
+    customerId: string;
+}
+
+export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [program, setProgram] = useState<Program | null>(null);
   const [loading, setLoading] = useState(true);
@@ -34,12 +35,12 @@ export default function LoyaltyCard() {
 
   useEffect(() => {
     const fetchCustomerData = async () => {
-      if (!CUSTOMER_ID_DEMO) {
+      if (!customerId) {
           setLoading(false);
           return;
       }
       try {
-        const customerRef = doc(db, "customers", CUSTOMER_ID_DEMO);
+        const customerRef = doc(db, "customers", customerId);
         const customerSnap = await getDoc(customerRef);
         
         if (customerSnap.exists()) {
@@ -68,7 +69,7 @@ export default function LoyaltyCard() {
       }
     };
     fetchCustomerData();
-  }, []);
+  }, [customerId]);
 
   const handleAddToWallet = async (walletType: 'google' | 'apple') => {
     if (!customer || !program) return;

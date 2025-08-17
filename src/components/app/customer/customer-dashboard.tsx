@@ -22,15 +22,22 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 
-const CUSTOMER_ID_DEMO = "bAsz8Nn9EaN5Sg2v3j0K";
+interface CustomerDashboardProps {
+    customerId: string;
+}
 
-export default function CustomerDashboard() {
+
+export default function CustomerDashboard({ customerId }: CustomerDashboardProps) {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
+        if (!customerId) {
+            setLoading(false);
+            return;
+        }
       try {
         // Fetch Rewards
         const rewardsSnapshot = await getDocs(collection(db, "rewards"));
@@ -38,10 +45,10 @@ export default function CustomerDashboard() {
         setRewards(rewardsData);
 
         // Fetch Customer
-        const customerRef = doc(db, "customers", CUSTOMER_ID_DEMO);
+        const customerRef = doc(db, "customers", customerId);
         const customerSnap = await getDoc(customerRef);
         if (customerSnap.exists()) {
-            setCustomer(customerSnap.data() as Customer);
+            setCustomer({id: customerSnap.id, ...customerSnap.data()} as Customer);
         }
 
       } catch (error) {
@@ -51,14 +58,14 @@ export default function CustomerDashboard() {
       }
     };
     fetchData();
-  }, []);
+  }, [customerId]);
 
 
   return (
     <div className="container mx-auto p-4 md:p-8">
       <div className="grid gap-8 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-8">
-          <LoyaltyCard />
+          <LoyaltyCard customerId={customerId} />
           <Card>
             <CardHeader>
               <CardTitle>Recompensas Disponibles</CardTitle>
@@ -98,7 +105,7 @@ export default function CustomerDashboard() {
                         <p className="text-lg font-bold text-primary">{reward.cost.toLocaleString()} puntos</p>
                     </CardContent>
                     <CardContent className="mt-auto">
-                      <Button className="w-full">Canjear ahora</Button>
+                      <Button className="w-full" disabled={!customer || customer.points < reward.cost}>Canjear ahora</Button>
                     </CardContent>
                   </Card>
                 ))
@@ -158,7 +165,7 @@ export default function CustomerDashboard() {
           </Card>
         </div>
         <div className="lg:col-span-1">
-          <VirtualAssistant />
+          <VirtualAssistant customerId={customerId} />
         </div>
       </div>
     </div>

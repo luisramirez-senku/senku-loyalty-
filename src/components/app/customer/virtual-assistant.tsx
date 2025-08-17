@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -25,7 +26,11 @@ interface Message {
   content: string;
 }
 
-export default function VirtualAssistant() {
+interface VirtualAssistantProps {
+    customerId: string;
+}
+
+export default function VirtualAssistant({ customerId }: VirtualAssistantProps) {
   const [loading, setLoading] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -39,7 +44,7 @@ export default function VirtualAssistant() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !customerId) return;
 
     const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
@@ -49,6 +54,8 @@ export default function VirtualAssistant() {
     try {
       const result = await loyaltyProgramAssistant({
         query: input,
+        // Passing customerId to the flow context, so it knows which customer to act on
+        customerId: customerId, 
       });
       const assistantMessage: Message = {
         role: "assistant",
@@ -162,7 +169,7 @@ export default function VirtualAssistant() {
             }}
             disabled={loading}
           />
-          <Button type="submit" size="icon" disabled={loading}>
+          <Button type="submit" size="icon" disabled={loading || !customerId}>
             <Send className="h-4 w-4" />
             <span className="sr-only">Enviar</span>
           </Button>
