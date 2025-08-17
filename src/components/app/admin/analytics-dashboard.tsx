@@ -1,7 +1,8 @@
+
 "use client";
 
 import React from "react";
-import { BarChart, LineChart, Users, Star, ShoppingCart } from "lucide-react";
+import { BarChart, LineChart, Users, Star, ShoppingCart, Percent, UserCheck, UserPlus, TrendingUp } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -28,22 +29,22 @@ import {
 import type { ChartConfig } from "@/components/ui/chart";
 
 const chartData = [
-  { month: "Enero", signups: 186, redeemed: 80 },
-  { month: "Febrero", signups: 305, redeemed: 200 },
-  { month: "Marzo", signups: 237, redeemed: 120 },
-  { month: "Abril", signups: 273, redeemed: 190 },
-  { month: "Mayo", signups: 209, redeemed: 130 },
-  { month: "Junio", signups: 214, redeemed: 140 },
+  { month: "Enero", signups: 186, revenue: 2200 },
+  { month: "Febrero", signups: 305, revenue: 2500 },
+  { month: "Marzo", signups: 237, revenue: 2800 },
+  { month: "Abril", signups: 273, revenue: 3500 },
+  { month: "Mayo", signups: 209, revenue: 3200 },
+  { month: "Junio", signups: 214, revenue: 4100 },
 ];
 
 const chartConfig = {
   signups: {
     label: "Nuevos registros",
-    color: "hsl(var(--primary))",
+    color: "hsl(var(--chart-2))",
   },
-  redeemed: {
-    label: "Recompensas canjeadas",
-    color: "hsl(var(--secondary-foreground))",
+  revenue: {
+    label: "Ingresos Generados ($)",
+    color: "hsl(var(--chart-1))",
   },
 } satisfies ChartConfig;
 
@@ -71,38 +72,38 @@ export default function AnalyticsDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Miembros activos
+              Tasa de Retención
             </CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">85.3%</div>
+            <p className="text-xs text-muted-foreground">
+              +1.2% desde el mes pasado
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">LTV del Cliente</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">$125.50</div>
+            <p className="text-xs text-muted-foreground">
+              +5% desde el último trimestre
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Miembros activos</CardTitle>
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">8,450</div>
             <p className="text-xs text-muted-foreground">
-              +180.1% desde el mes pasado
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recompensas canjeadas</CardTitle>
-            <Star className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+1,234</div>
-            <p className="text-xs text-muted-foreground">
-              +19% desde el mes pasado
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Puntos emitidos</CardTitle>
-            <BarChart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">2,350,000</div>
-            <p className="text-xs text-muted-foreground">
-              +201 desde la última hora
+              +10.5% desde el mes pasado
             </p>
           </CardContent>
         </Card>
@@ -110,7 +111,10 @@ export default function AnalyticsDashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Visión general</CardTitle>
+            <CardTitle>Visión general del Crecimiento</CardTitle>
+            <CardDescription>
+                Nuevos registros e ingresos generados por el programa.
+            </CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
             <ChartContainer config={chartConfig} className="h-[350px] w-full">
@@ -124,21 +128,24 @@ export default function AnalyticsDashboard() {
                     axisLine={false}
                     tickFormatter={(value) => value.slice(0, 3)}
                   />
-                  <YAxis />
+                  <YAxis yAxisId="left" orientation="left" stroke="hsl(var(--chart-1))" />
+                  <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--chart-2))" />
                   <ChartTooltip
                     cursor={false}
                     content={<ChartTooltipContent />}
                   />
                   <ChartLegend content={<ChartLegendContent />} />
                   <Bar
+                    yAxisId="right"
                     dataKey="signups"
                     fill="var(--color-signups)"
                     radius={4}
                   />
                   <Line
-                    dataKey="redeemed"
+                    yAxisId="left"
+                    dataKey="revenue"
                     type="monotone"
-                    stroke="var(--color-redeemed)"
+                    stroke="var(--color-revenue)"
                     strokeWidth={2}
                     dot={false}
                   />
@@ -151,68 +158,78 @@ export default function AnalyticsDashboard() {
           <CardHeader>
             <CardTitle>Actividad reciente</CardTitle>
             <CardDescription>
-              25 nuevos miembros se unieron este mes.
+              Últimas transacciones significativas de los miembros.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-8">
               <div className="flex items-center">
-                <Users className="h-8 w-8 mr-4 text-primary" />
+                 <div className="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10">
+                    <UserPlus className="h-5 w-5 text-primary" />
+                </div>
                 <div className="ml-4 space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    Olivia Martin
+                    Olivia Martin se ha unido
                   </p>
                   <p className="text-sm text-muted-foreground">
                     olivia.martin@email.com
                   </p>
                 </div>
-                <div className="ml-auto font-medium">+1,999 pts</div>
+                <div className="ml-auto font-medium text-muted-foreground">Hoy</div>
               </div>
               <div className="flex items-center">
-                <Users className="h-8 w-8 mr-4 text-primary" />
+                <div className="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10">
+                    <ShoppingCart className="h-5 w-5 text-primary" />
+                </div>
                 <div className="ml-4 space-y-1">
                   <p className="text-sm font-medium leading-none">
                     Jackson Lee
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    jackson.lee@email.com
+                    Compra en la tienda
                   </p>
                 </div>
-                <div className="ml-auto font-medium">+390 pts</div>
+                <div className="ml-auto font-medium">+$25.50</div>
               </div>
               <div className="flex items-center">
-                <Users className="h-8 w-8 mr-4 text-primary" />
+                <div className="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10">
+                    <ShoppingCart className="h-5 w-5 text-primary" />
+                </div>
                 <div className="ml-4 space-y-1">
                   <p className="text-sm font-medium leading-none">
                     Isabella Nguyen
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    isabella.nguyen@email.com
+                   <p className="text-sm text-muted-foreground">
+                    Compra en la tienda
                   </p>
                 </div>
-                <div className="ml-auto font-medium">+2,999 pts</div>
+                <div className="ml-auto font-medium">+$150.00</div>
               </div>
               <div className="flex items-center">
-                <Users className="h-8 w-8 mr-4 text-primary" />
+                <div className="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10">
+                    <UserPlus className="h-5 w-5 text-primary" />
+                </div>
                 <div className="ml-4 space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    William Kim
+                    William Kim se ha unido
                   </p>
                   <p className="text-sm text-muted-foreground">will@email.com</p>
                 </div>
-                <div className="ml-auto font-medium">+990 pts</div>
+                <div className="ml-auto font-medium text-muted-foreground">Ayer</div>
               </div>
               <div className="flex items-center">
-                <Users className="h-8 w-8 mr-4 text-primary" />
+                <div className="h-10 w-10 flex items-center justify-center rounded-full bg-primary/10">
+                    <ShoppingCart className="h-5 w-5 text-primary" />
+                </div>
                 <div className="ml-4 space-y-1">
                   <p className="text-sm font-medium leading-none">
                     Sofia Davis
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    sofia.davis@email.com
+                    Compra en la tienda
                   </p>
                 </div>
-                <div className="ml-auto font-medium">+390 pts</div>
+                <div className="ml-auto font-medium">+$42.80</div>
               </div>
             </div>
           </CardContent>
