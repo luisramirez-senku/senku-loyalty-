@@ -36,9 +36,11 @@ const pricingPlans = [
         priceMonthly: true,
         description: "Para pequeños negocios que empiezan.",
         features: [
-            "Hasta 500 miembros",
             "1 Programa de Lealtad",
-            "Pases de Wallet Digitales",
+            "1 Sucursal",
+            "Tarjetas Digitales Ilimitadas",
+            "Segmentación de Clientes",
+            "Funcionalidades de IA",
             "Soporte por correo electrónico"
         ],
         cta: "Bajar a Esencial"
@@ -49,8 +51,9 @@ const pricingPlans = [
         priceMonthly: true,
         description: "Para negocios en expansión.",
         features: [
-            "Hasta 5,000 miembros",
-            "Programas ilimitados",
+            "5 Programas de Lealtad",
+            "Hasta 5 Sucursales",
+            "Tarjetas Digitales Ilimitadas",
             "Segmentación de Clientes",
             "Funcionalidades de IA",
             "Soporte prioritario"
@@ -63,7 +66,8 @@ const pricingPlans = [
         priceMonthly: false,
         description: "Para grandes empresas y franquicias.",
         features: [
-            "Miembros ilimitados",
+            "Programas Ilimitados",
+            "Sucursales Ilimitadas",
             "Panel de Super Admin",
             "Marca Blanca Personalizada",
             "Soporte Dedicado 24/7",

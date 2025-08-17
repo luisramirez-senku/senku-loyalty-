@@ -41,9 +41,11 @@ const pricingPlans = [
         price: "$29",
         priceMonthly: true,
         features: [
-            "Hasta 500 miembros",
             "1 Programa de Lealtad",
-            "Pases de Wallet Digitales",
+            "1 Sucursal",
+            "Tarjetas Digitales Ilimitadas",
+            "Segmentación de Clientes",
+            "Funcionalidades de IA",
             "Soporte por correo electrónico"
         ],
         cta: "Empezar con Esencial"
@@ -53,8 +55,9 @@ const pricingPlans = [
         price: "$79",
         priceMonthly: true,
         features: [
-            "Hasta 5,000 miembros",
-            "Programas ilimitados",
+            "5 Programas de Lealtad",
+            "Hasta 5 Sucursales",
+            "Tarjetas Digitales Ilimitadas",
             "Segmentación de Clientes",
             "Funcionalidades de IA",
             "Soporte prioritario"
@@ -67,7 +70,8 @@ const pricingPlans = [
         price: "Contacto",
         priceMonthly: false,
         features: [
-            "Miembros ilimitados",
+            "Programas Ilimitados",
+            "Sucursales Ilimitadas",
             "Panel de Super Admin",
             "Marca Blanca Personalizada",
             "Soporte Dedicado 24/7",
