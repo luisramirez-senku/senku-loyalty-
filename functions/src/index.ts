@@ -32,8 +32,11 @@ export const generateWalletPass = onRequest(
     });
 
     // 1. Authenticate with Google
-    // In a production Cloud Functions environment, the service account credentials
-    // are automatically available.
+    // To get credentials for this function, you must:
+    //   a. Create a Service Account in your Google Cloud Project (IAM & Admin -> Service Accounts).
+    //   b. Go to the Google Pay & Wallet Console (https://pay.google.com/business/console).
+    //   c. Go to the "Users" section and invite your new Service Account's email address.
+    // This grants the service account permission to act as an issuer. There is no IAM Role for this.
     const auth = new GoogleAuth({
       scopes: ["https://www.googleapis.com/auth/wallet_object.issuer"],
     });
