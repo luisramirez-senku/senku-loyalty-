@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState } from "react";
@@ -151,8 +152,8 @@ export default function ProgramManagement() {
                     </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <CardDescription>
-                <div className="flex items-center gap-2 text-sm">
+              <CardDescription asChild>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <TypeIcon type={program.type} />
                     <span>{program.type}</span>
                 </div>
