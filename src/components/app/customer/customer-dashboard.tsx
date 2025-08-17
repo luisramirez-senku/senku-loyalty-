@@ -2,11 +2,11 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import LoyaltyCard from "./loyalty-card";
 import VirtualAssistant from "./virtual-assistant";
-import { Gift, Loader } from "lucide-react";
+import { Gift, Loader, History } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -16,26 +16,41 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { Reward } from "@/components/app/admin/reward-management";
+import type { Customer, Transaction } from "@/components/app/admin/customer-management";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
+
+const CUSTOMER_ID_DEMO = "bAsz8Nn9EaN5Sg2v3j0K";
 
 export default function CustomerDashboard() {
   const [rewards, setRewards] = useState<Reward[]>([]);
+  const [customer, setCustomer] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchRewards = async () => {
+    const fetchData = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, "rewards"));
-        const rewardsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reward));
+        // Fetch Rewards
+        const rewardsSnapshot = await getDocs(collection(db, "rewards"));
+        const rewardsData = rewardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reward));
         setRewards(rewardsData);
+
+        // Fetch Customer
+        const customerRef = doc(db, "customers", CUSTOMER_ID_DEMO);
+        const customerSnap = await getDoc(customerRef);
+        if (customerSnap.exists()) {
+            setCustomer(customerSnap.data() as Customer);
+        }
+
       } catch (error) {
-        console.error("Error al obtener las recompensas:", error);
+        console.error("Error al obtener datos:", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchRewards();
+    fetchData();
   }, []);
 
 
@@ -93,6 +108,52 @@ export default function CustomerDashboard() {
                     <p>No hay recompensas disponibles en este momento. Vuelve a consultar pronto.</p>
                 </div>
                 )}
+            </CardContent>
+          </Card>
+           <Card>
+            <CardHeader>
+              <CardTitle>Historial de Actividad</CardTitle>
+              <CardDescription>
+                Aquí puedes ver tus transacciones recientes.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="space-y-4">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : customer && customer.history && customer.history.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Descripción</TableHead>
+                      <TableHead className="hidden sm:table-cell">Fecha</TableHead>
+                      <TableHead className="text-right">Puntos</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {customer.history.map((tx) => (
+                      <TableRow key={tx.id}>
+                        <TableCell className="font-medium">{tx.description}</TableCell>
+                        <TableCell className="hidden sm:table-cell">{tx.date}</TableCell>
+                        <TableCell className="text-right">
+                           <Badge variant={tx.points > 0 ? 'default' : 'destructive'}>
+                                {tx.points > 0 ? `+${tx.points}` : tx.points}
+                            </Badge>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="text-center text-muted-foreground py-16">
+                    <History className="mx-auto h-12 w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-semibold">Sin actividad</h3>
+                    <p className="mt-1 text-sm text-gray-500">Aún no tienes transacciones.</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -18,13 +18,20 @@ import { collection, writeBatch, doc } from 'firebase/firestore';
 // Helper function to generate initials
 const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
+const demoTransactions = [
+    { id: "txn_1", date: "2024-07-20", description: "Compra en tienda", points: 120 },
+    { id: "txn_2", date: "2024-07-18", description: "Bono de bienvenida", points: 500 },
+    { id: "txn_3", date: "2024-07-15", description: "Canje: Café Gratis", points: -1500 },
+    { id: "txn_4", date: "2024-07-12", description: "Compra en tienda", points: 85 },
+];
+
 // Data for seeding
 const demoCustomers = [
-    { id: "bAsz8Nn9EaN5Sg2v3j0K", name: "Elena Ríos", email: "elena.r@example.com", tier: "Oro", points: 12580, segment: "Alto valor", joined: "2023-01-15", initials: "ER" },
-    { id: "cDy1FmPq7sT9wX4z6K", name: "Carlos Vargas", email: "carlos.v@example.com", tier: "Plata", points: 7500, segment: "Comprador frecuente", joined: "2023-03-22", initials: "CV" },
-    { id: "hJkL5rT8vW2yX9z1M", name: "Ana Torres", email: "ana.t@example.com", tier: "Bronce", points: 1200, segment: "Nuevo miembro", joined: "2024-05-10", initials: "AT" },
-    { id: "mNbV6cXz8aQ3wE9rT", name: "Javier Mendoza", email: "javier.m@example.com", tier: "Plata", points: 6200, segment: "En riesgo", joined: "2023-02-01", initials: "JM" },
-    { id: "pLkT7sW9vX3zY1gH4", name: "Sofía Castillo", email: "sofia.c@example.com", tier: "VIP", points: 25000, segment: "VIP", joined: "2022-11-20", initials: "SC" },
+    { id: "bAsz8Nn9EaN5Sg2v3j0K", name: "Elena Ríos", email: "elena.r@example.com", tier: "Oro", points: 12580, segment: "Alto valor", joined: "2023-01-15", initials: "ER", history: demoTransactions },
+    { id: "cDy1FmPq7sT9wX4z6K", name: "Carlos Vargas", email: "carlos.v@example.com", tier: "Plata", points: 7500, segment: "Comprador frecuente", joined: "2023-03-22", initials: "CV", history: [] },
+    { id: "hJkL5rT8vW2yX9z1M", name: "Ana Torres", email: "ana.t@example.com", tier: "Bronce", points: 1200, segment: "Nuevo miembro", joined: "2024-05-10", initials: "AT", history: [] },
+    { id: "mNbV6cXz8aQ3wE9rT", name: "Javier Mendoza", email: "javier.m@example.com", tier: "Plata", points: 6200, segment: "En riesgo", joined: "2023-02-01", initials: "JM", history: [] },
+    { id: "pLkT7sW9vX3zY1gH4", name: "Sofía Castillo", email: "sofia.c@example.com", tier: "VIP", points: 25000, segment: "VIP", joined: "2022-11-20", initials: "SC", history: [] },
 ];
 
 const demoRewards = [

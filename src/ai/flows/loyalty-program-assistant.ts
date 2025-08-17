@@ -15,7 +15,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { db } from "@/lib/firebase/client";
 import { collection, doc, getDoc, getDocs, updateDoc, writeBatch } from "firebase/firestore";
-import type { Customer } from "@/components/app/admin/customer-management";
+import type { Customer, Transaction } from "@/components/app/admin/customer-management";
 import type { Reward } from "@/components/app/admin/reward-management";
 
 
@@ -29,12 +29,18 @@ const loyaltyProgramDetails = "El programa tiene tres niveles: Bronce (0-4999 pt
 const getCustomerInfo = ai.defineTool(
     {
       name: 'getCustomerInfo',
-      description: 'Obtiene la información del cliente actual, como su nombre, nivel de lealtad y saldo de puntos.',
+      description: 'Obtiene la información del cliente actual, como su nombre, nivel de lealtad, saldo de puntos y su historial de transacciones.',
       inputSchema: z.object({}),
       outputSchema: z.object({
         name: z.string(),
         tier: z.string(),
         points: z.number(),
+        history: z.array(z.object({
+            id: z.string(),
+            date: z.string(),
+            description: z.string(),
+            points: z.number(),
+        })).optional(),
       }),
     },
     async () => {
@@ -45,7 +51,8 @@ const getCustomerInfo = ai.defineTool(
         return {
             name: customer.name,
             tier: customer.tier,
-            points: customer.points
+            points: customer.points,
+            history: customer.history || [],
         }
       }
       throw new Error("Cliente no encontrado.");
