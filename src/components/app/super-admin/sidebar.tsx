@@ -55,7 +55,7 @@ export function SuperAdminSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname.startsWith(item.href) && (item.href !== '/super-admin' || pathname === '/super-admin')}
+                isActive={pathname.startsWith(item.href) && (item.href.length > '/super-admin'.length ? pathname.startsWith(item.href) : pathname === item.href) }
                 tooltip={item.label}
               >
                 <Link href={item.href}>
