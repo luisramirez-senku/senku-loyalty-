@@ -26,22 +26,6 @@ interface CustomerDashboardProps {
     customerId: string;
 }
 
-const DEMO_TENANT_ID = 'HUI2lwm11IYraNz0LyPv1Q597H73';
-const DEMO_CUSTOMER_ID = 'bAsz8Nn9EaN5Sg2v3j0K';
-
-const demoRewards: Reward[] = [
-    { id: "reward_1", name: "Café Gratis", description: "Cualquier café de tamaño mediano.", cost: 1500 },
-    { id: "reward_2", name: "Pastel del día", description: "Una rebanada de nuestro pastel del día.", cost: 2500 },
-    { id: "reward_3", name: "Descuento del 20%", description: "20% de descuento en tu compra total.", cost: 5000 },
-    { id: "reward_4", name: "Taza de Marca", description: "Una taza de cerámica con nuestro logo.", cost: 7500 },
-];
-
-const demoHistory = [
-    {id: "tx_1", date: "2024-05-20", description: "Compra Grande", points: 500},
-    {id: "tx_2", date: "2024-05-18", description: "Canje de Café", points: -1500},
-];
-
-
 export default function CustomerDashboard({ customerId }: CustomerDashboardProps) {
   const [rewards, setRewards] = useState<Reward[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
@@ -78,14 +62,8 @@ export default function CustomerDashboard({ customerId }: CustomerDashboardProps
           // Fetch Rewards for that tenant
           const rewardsCollection = collection(db, "tenants", foundTenantId, "rewards");
           const rewardsSnapshot = await getDocs(rewardsCollection);
-
-          if (rewardsSnapshot.empty && foundTenantId === DEMO_TENANT_ID && customerId === DEMO_CUSTOMER_ID) {
-            setRewards(demoRewards);
-            setCustomer(c => c ? { ...c, history: demoHistory } : null);
-          } else {
-            const rewardsData = rewardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reward));
-            setRewards(rewardsData);
-          }
+          const rewardsData = rewardsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Reward));
+          setRewards(rewardsData);
         } else {
             console.error("Customer not found in any tenant.");
         }
