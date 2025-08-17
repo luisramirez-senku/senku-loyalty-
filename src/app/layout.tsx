@@ -1,4 +1,3 @@
-
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
@@ -18,16 +17,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    // The lang prop is managed by the [locale] layout, so we don't set it here
-    <html suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
        <head>
-          <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css"/>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.2.3/css/flag-icons.min.css" />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
         <AuthProvider>
           {children}
-          <Toaster />
         </AuthProvider>
+        <Toaster />
       </body>
     </html>
   );
