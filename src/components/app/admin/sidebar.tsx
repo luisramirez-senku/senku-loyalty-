@@ -23,6 +23,7 @@ import {
   Settings,
   Workflow,
   Sparkles,
+  MapPin,
 } from "lucide-react";
 import Logo from "@/components/app/shared/logo";
 import { useAuth } from "@/hooks/use-auth";
@@ -33,6 +34,7 @@ const menuItems = [
   { href: "/admin/customers", label: "Clientes", icon: Users },
   { href: "/admin/programs", label: "Programas", icon: Award },
   { href: "/admin/rewards", label: "Recompensas", icon: Gift },
+  { href: "/admin/branches", label: "Sucursales", icon: MapPin },
   { href: "/admin/offers", label: "Ofertas", icon: Sparkles },
   { href: "/admin/promotions", label: "Notificaciones Push", icon: Bell },
   { href: "/admin/automations", label: "Automatizaciones", icon: Workflow },
