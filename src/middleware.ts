@@ -24,6 +24,6 @@ export const config = {
 
     // Enable redirects that add a locale prefix
     // (e.g. `/pathnames` -> `/en/pathnames`)
-    '/((?!_next/static|_next/image|favicon.ico|api).*)'
+    '/((?!_next|api|.*\\..*).*)'
   ]
 };
