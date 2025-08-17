@@ -148,9 +148,9 @@ export const generateWalletPass = onRequest(
     let loyaltyClassId;
     let programData;
     try {
-        const programRef = doc(db, "tenants", tenantId, "programs", programId);
+        const programRef = admin.firestore().doc(`tenants/${tenantId}/programs/${programId}`);
         const programSnap = await programRef.get();
-        if (!programSnap.exists()) {
+        if (!programSnap.exists) {
             throw new Error(`Program ${programId} not found for tenant ${tenantId}.`);
         }
         programData = programSnap.data();
@@ -381,3 +381,5 @@ export const paypalWebhookHandler = onRequest(async (request, response) => {
     response.status(500).send("Internal Server Error");
   }
 });
+
+    
