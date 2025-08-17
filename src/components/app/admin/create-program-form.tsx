@@ -84,9 +84,14 @@ export default function CreateProgramForm() {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            programType: undefined,
             programName: "",
             issuerName: "",
             programDescription: "",
+            pointsPerAmount: undefined,
+            amountForPoints: undefined,
+            stampsCount: undefined,
+            cashbackPercentage: undefined,
             logoText: "",
             foregroundColor: "#ffffff",
             backgroundColor: "#000000",
@@ -523,3 +528,5 @@ export default function CreateProgramForm() {
     </div>
   );
 }
+
+    
