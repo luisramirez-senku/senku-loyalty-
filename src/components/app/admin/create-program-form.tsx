@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -62,9 +63,7 @@ const formSchema = z.object({
   logoImage: z.any().optional(),
   iconImage: z.any().optional(),
   stripImage: z.any().optional(),
-  stampIconActiveColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
-  stampIconInactiveColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
-
+  
   barcodeType: z.string().min(1, "El tipo de código de barras es requerido."),
 });
 
@@ -83,8 +82,6 @@ export default function CreateProgramForm() {
             foregroundColor: "#ffffff",
             backgroundColor: "#000000",
             labelColor: "#ffffff",
-            stampIconActiveColor: "#000000",
-            stampIconInactiveColor: "#dddddd",
             barcodeType: "PKBarcodeFormatQR",
         },
       });
@@ -105,11 +102,9 @@ export default function CreateProgramForm() {
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex items-center gap-4">
-            <Link href="/admin/programs" passHref>
-                <Button variant="outline" size="icon" disabled={step === 1}>
-                    <ArrowLeft className="h-4 w-4" />
-                </Button>
-            </Link>
+            <Button variant="outline" size="icon" onClick={prevStep} disabled={step === 1}>
+                <ArrowLeft className="h-4 w-4" />
+            </Button>
             <div>
                 <h2 className="text-3xl font-bold tracking-tight">Crear Nuevo Programa de Lealtad</h2>
                 <p className="text-muted-foreground">
@@ -261,49 +256,20 @@ export default function CreateProgramForm() {
                             )}
 
                             {programType === 'Sellos' && (
-                                <>
-                                    <FormField
-                                        control={form.control}
-                                        name="stampsCount"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormLabel>Número de Sellos</FormLabel>
-                                            <FormControl>
-                                                <Input type="number" placeholder="10" {...field} />
-                                            </FormControl>
-                                            <FormDescription>Sellos necesarios para completar la tarjeta.</FormDescription>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <div />
-                                    <FormField
-                                        control={form.control}
-                                        name="stampIconActiveColor"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormLabel>Color del Sello Activo</FormLabel>
-                                            <FormControl>
-                                                <Input type="color" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="stampIconInactiveColor"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormLabel>Color del Sello Inactivo</FormLabel>
-                                            <FormControl>
-                                                <Input type="color" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </>
+                                <FormField
+                                    control={form.control}
+                                    name="stampsCount"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Número de Sellos</FormLabel>
+                                        <FormControl>
+                                            <Input type="number" placeholder="10" {...field} />
+                                        </FormControl>
+                                        <FormDescription>Sellos necesarios para completar la tarjeta.</FormDescription>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                />
                             )}
 
                              {programType === 'Cashback' && (
