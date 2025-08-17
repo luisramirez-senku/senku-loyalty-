@@ -20,6 +20,7 @@ import {
   UserCog,
   LogOut,
   Settings,
+  Workflow,
 } from "lucide-react";
 import Logo from "@/components/app/shared/logo";
 
@@ -29,6 +30,7 @@ const menuItems = [
   { href: "/admin/programs", label: "Programas", icon: Award },
   { href: "/admin/offers", label: "Ofertas", icon: Gift },
   { href: "/admin/promotions", label: "Notificaciones Push", icon: Bell },
+  { href: "/admin/automations", label: "Automatizaciones", icon: Workflow },
   { href: "/admin/users", label: "Usuarios", icon: UserCog },
 ];
 
@@ -51,7 +53,7 @@ export function AdminSidebar() {
             <SidebarMenuItem key={item.href}>
               <SidebarMenuButton
                 asChild
-                isActive={pathname === item.href}
+                isActive={pathname.startsWith(item.href) && (item.href !== '/admin' || pathname === '/admin')}
                 tooltip={item.label}
               >
                 <Link href={item.href}>
