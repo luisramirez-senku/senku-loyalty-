@@ -20,35 +20,42 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from "@/components/ui/dropdown-menu";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
+import { ManualPaymentDialog } from "./manual-payment-dialog";
 
-type TenantPlan = "Gratis" | "Pro" | "Empresarial";
+type TenantPlan = "Gratis" | "Pro" | "Empresarial" | "Esencial" | "Crecimiento";
 type TenantStatus = "Activo" | "Prueba" | "Cancelado" | "Suspendido";
 
-type Tenant = {
+export type Tenant = {
     id: string;
     name: string;
     plan: TenantPlan;
     status: TenantStatus;
     members: number; // This would need to be calculated in a real app
     createdAt: string;
+    trialEnds?: {
+        toDate: () => Date;
+    };
 };
 
 export default function TenantManagement() {
   const router = useRouter();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [isManualPaymentOpen, setManualPaymentOpen] = useState(false);
 
   useEffect(() => {
     const fetchTenants = async () => {
@@ -65,7 +72,8 @@ export default function TenantManagement() {
                     plan: data.plan,
                     status: data.status,
                     createdAt: new Date(data.createdAt).toLocaleDateString(),
-                    members
+                    members,
+                    trialEnds: data.trialEnds,
                 });
             }
             setTenants(tenantsData);
@@ -86,8 +94,43 @@ export default function TenantManagement() {
   const handleImpersonate = () => {
     router.push('/admin');
   };
+
+  const handleOpenManualPayment = (tenant: Tenant) => {
+    setSelectedTenant(tenant);
+    setManualPaymentOpen(true);
+  }
+
+  const handleSavePayment = async (tenantId: string, newPlan: TenantPlan, newStatus: TenantStatus) => {
+    try {
+        const tenantRef = doc(db, "tenants", tenantId);
+        await updateDoc(tenantRef, {
+            plan: newPlan,
+            status: newStatus
+        });
+        
+        setTenants(tenants.map(t => 
+            t.id === tenantId ? { ...t, plan: newPlan, status: newStatus } : t
+        ));
+
+        toast({
+            title: "Pago Registrado",
+            description: `El plan para ${selectedTenant?.name} ha sido actualizado.`
+        });
+        setManualPaymentOpen(false);
+        setSelectedTenant(null);
+
+    } catch (error) {
+        console.error("Error al registrar el pago manual:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "No se pudo registrar el pago."
+        });
+    }
+  }
   
   return (
+    <>
     <Card>
       <CardHeader>
         <CardTitle>Clientes (Inquilinos)</CardTitle>
@@ -143,6 +186,8 @@ export default function TenantManagement() {
                                 <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 <DropdownMenuItem onClick={handleImpersonate}>Ver Panel</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleOpenManualPayment(tenant)}>Registrar Pago Manual</DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem>Editar</DropdownMenuItem>
                                 <DropdownMenuItem className="text-destructive">Suspender</DropdownMenuItem>
                                 </DropdownMenuContent>
@@ -155,5 +200,14 @@ export default function TenantManagement() {
         </Table>
       </CardContent>
     </Card>
+    {selectedTenant && (
+        <ManualPaymentDialog
+            isOpen={isManualPaymentOpen}
+            setIsOpen={setManualPaymentOpen}
+            tenant={selectedTenant}
+            onSave={handleSavePayment}
+        />
+    )}
+    </>
   );
 }
