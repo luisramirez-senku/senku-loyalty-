@@ -1,5 +1,5 @@
-import PromotionGenerator from "@/components/app/admin/promotion-generator";
+import PushNotificationGenerator from "@/components/app/admin/push-notification-generator";
 
-export default function PromotionsPage() {
-  return <PromotionGenerator />;
+export default function PushNotificationsPage() {
+  return <PushNotificationGenerator />;
 }

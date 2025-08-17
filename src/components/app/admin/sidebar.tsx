@@ -16,7 +16,7 @@ import {
   Users,
   Award,
   Gift,
-  Megaphone,
+  Bell,
   UserCog,
   LogOut,
   Settings,
@@ -28,7 +28,7 @@ const menuItems = [
   { href: "/admin/customers", label: "Clientes", icon: Users },
   { href: "/admin/programs", label: "Programas", icon: Award },
   { href: "/admin/offers", label: "Ofertas", icon: Gift },
-  { href: "/admin/promotions", label: "Promociones", icon: Megaphone },
+  { href: "/admin/promotions", label: "Notificaciones Push", icon: Bell },
   { href: "/admin/users", label: "Usuarios", icon: UserCog },
 ];
 

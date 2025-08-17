@@ -36,17 +36,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Loader, Sparkles, Clipboard, Check } from "lucide-react";
+import { Loader, Sparkles, Clipboard, Check, Send } from "lucide-react";
 
 const formSchema = z.object({
     offerName: z.string().min(1, "Se requiere el nombre de la oferta."),
     offerDetails: z.string().min(1, "Se requieren los detalles de la oferta."),
     customerSegment: z.string().min(1, "Se requiere el segmento de clientes."),
-    callToAction: z.string().min(1, "Se requiere la llamada a la acción."),
+    callToAction: z.string().optional(),
     tone: z.string().min(1, "Se requiere el tono."),
 });
 
-export default function PromotionGenerator() {
+export default function PushNotificationGenerator() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] =
     useState<GeneratePromotionalTextOutput | null>(null);
@@ -84,7 +84,7 @@ export default function PromotionGenerator() {
 
   const handleCopy = () => {
     if (result) {
-        navigator.clipboard.writeText(result.promotionalText);
+        navigator.clipboard.writeText(result.promotionalText.notificationBody);
         setCopied(true);
         toast({ title: "¡Copiado al portapapeles!" });
         setTimeout(() => setCopied(false), 2000);
@@ -95,7 +95,7 @@ export default function PromotionGenerator() {
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="flex items-center justify-between space-y-2">
         <h2 className="text-3xl font-bold tracking-tight">
-          Generador de texto promocional
+          Generador de Notificaciones Push
         </h2>
       </div>
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
@@ -114,7 +114,7 @@ export default function PromotionGenerator() {
                   name="offerName"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Nombre de la oferta</FormLabel>
+                      <FormLabel>Título de la Notificación</FormLabel>
                       <FormControl>
                         <Input placeholder="p.ej., Especial de fin de semana" {...field} />
                       </FormControl>
@@ -127,13 +127,16 @@ export default function PromotionGenerator() {
                   name="offerDetails"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Detalles de la oferta</FormLabel>
-                      <FormControl>
+                      <FormLabel>Detalles para la IA</FormLabel>
+                       <FormControl>
                         <Textarea
                           placeholder="p.ej., Obtenga un 20% de descuento en todos los pasteles..."
                           {...field}
                         />
                       </FormControl>
+                      <FormDescription>
+                        Proporcione contexto para que la IA genere un buen cuerpo de notificación.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -146,19 +149,6 @@ export default function PromotionGenerator() {
                       <FormLabel>Segmento de clientes</FormLabel>
                       <FormControl>
                         <Input placeholder="p.ej., Nuevos clientes, miembros VIP" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="callToAction"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Llamada a la acción</FormLabel>
-                      <FormControl>
-                        <Input placeholder="p.ej., Canjear ahora, Más información" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -194,7 +184,7 @@ export default function PromotionGenerator() {
                   ) : (
                     <Sparkles className="mr-2 h-4 w-4" />
                   )}
-                  Generar texto
+                  Generar notificación
                 </Button>
               </form>
             </Form>
@@ -202,37 +192,52 @@ export default function PromotionGenerator() {
         </Card>
         <div className="lg:col-span-3">
           <Card className="sticky top-20">
-            <CardHeader className="flex flex-row items-start justify-between">
+            <CardHeader>
                 <div>
-                    <CardTitle>Promoción generada</CardTitle>
+                    <CardTitle>Notificación Push Generada</CardTitle>
                     <CardDescription>
-                        Texto generado por IA para atraer a sus clientes.
+                        Vista previa de cómo se verá la notificación en un dispositivo.
                     </CardDescription>
                 </div>
-                 {result && (
-                     <Button variant="outline" size="icon" onClick={handleCopy} disabled={copied}>
-                        {copied ? <Check className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
-                    </Button>
-                 )}
             </CardHeader>
-            <CardContent className="space-y-4 min-h-[300px]">
+            <CardContent className="space-y-4 min-h-[300px] flex items-center justify-center">
               {loading && (
                 <div className="flex justify-center items-center h-full">
                   <Loader className="h-8 w-8 animate-spin text-primary" />
                 </div>
               )}
               {result ? (
-                <div className="prose prose-sm dark:prose-invert max-w-none whitespace-pre-wrap">
-                    {result.promotionalText}
+                <div className="w-full max-w-sm rounded-xl bg-background/50 border p-4 shadow-md">
+                    <div className="flex items-start gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center shrink-0">
+                            <Sparkles className="w-5 h-5 text-primary"/>
+                        </div>
+                        <div className="flex-1">
+                            <h3 className="font-semibold text-sm">{result.promotionalText.notificationTitle}</h3>
+                            <p className="text-sm text-muted-foreground">{result.promotionalText.notificationBody}</p>
+                        </div>
+                    </div>
                 </div>
               ) : (
                 !loading && (
                   <div className="flex justify-center items-center h-full text-center text-muted-foreground">
-                    <p>El texto promocional generado aparecerá aquí.</p>
+                    <p>La notificación generada aparecerá aquí.</p>
                   </div>
                 )
               )}
             </CardContent>
+            {result && (
+                <CardFooter className="flex-col gap-2">
+                    <Button className="w-full">
+                        <Send className="mr-2 h-4 w-4" />
+                        Enviar Notificación
+                    </Button>
+                     <Button variant="outline" size="sm" onClick={handleCopy} disabled={copied}>
+                        {copied ? <Check className="mr-2 h-4 w-4" /> : <Clipboard className="mr-2 h-4 w-4" />}
+                        {copied ? "Copiado" : "Copiar Texto"}
+                    </Button>
+                </CardFooter>
+            )}
           </Card>
         </div>
       </div>
