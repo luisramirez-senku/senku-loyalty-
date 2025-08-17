@@ -3,16 +3,14 @@
 
 import React, { createContext, useState, useEffect, ReactNode } from 'react';
 import { 
-    getAuth, 
     onAuthStateChanged, 
     User, 
     createUserWithEmailAndPassword, 
     signInWithEmailAndPassword, 
     signOut,
-    UserCredential,
-    Auth
+    UserCredential
 } from 'firebase/auth';
-import { app, db } from '@/lib/firebase/client';
+import { app, db, auth } from '@/lib/firebase/client';
 import { Loader } from 'lucide-react';
 import { collection, writeBatch, doc } from 'firebase/firestore';
 
@@ -104,7 +102,6 @@ const seedInitialData = async (userId: string, userName: string, userEmail: stri
     await batch.commit();
 }
 
-const auth = getAuth(app);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
