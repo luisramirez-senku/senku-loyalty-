@@ -7,6 +7,7 @@ import {onRequest} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import {v4 as uuidv4} from "uuid";
 import * as admin from "firebase-admin";
+import {GoogleAuth} from "google-auth-library";
 
 admin.initializeApp();
 const db = admin.firestore();
@@ -15,19 +16,30 @@ const db = admin.firestore();
 setGlobalOptions({region: "us-central1"});
 
 // This would come from your Google Cloud Service Account credentials in a real backend
-const ISSUER_ID = "3388000000022316666";
-// This should be a class you have pre-created via the Google Wallet API
-const LOYALTY_CLASS_ID = "LOYALTY_CLASS_ID_PLACEHOLDER";
+// You can find this in the Google Wallet API console after creating an issuer account.
+const ISSUER_ID = "3388000000022316666"; // <<<--- REPLACE WITH YOUR ISSUER ID
+
+// This should be a class you have pre-created via the Google Wallet API.
+// It defines the template for your loyalty cards.
+const LOYALTY_CLASS_ID = "LOYALTY_CLASS_ID_PLACEHOLDER"; // <<<--- REPLACE WITH YOUR CLASS ID
 
 
 export const generateWalletPass = onRequest(
   {cors: true}, // Enable CORS for client-side requests
-  (request, response) => {
+  async (request, response) => {
     logger.info("generateWalletPass function triggered", {
       body: request.body,
     });
 
-    // In a real implementation, you would validate this input
+    // 1. Authenticate with Google
+    // In a production Cloud Functions environment, the service account credentials
+    // are automatically available.
+    const auth = new GoogleAuth({
+      scopes: ["https://www.googleapis.com/auth/wallet_object.issuer"],
+    });
+    const authClient = await auth.getClient();
+
+    // 2. Validate Input
     const {
       customerId,
       customerName,
@@ -45,17 +57,12 @@ export const generateWalletPass = onRequest(
       return;
     }
 
-    // In a real implementation, you would:
-    // 1. Use the Google Wallet REST API client library.
-    // 2. Create a new LoyaltyObject payload.
-    // 3. Sign that payload into a JWT using your service account credentials.
-    // Here, we continue to simulate this process for demonstration.
-
+    // 3. Create the Loyalty Object Payload
     const loyaltyObjectId = `${ISSUER_ID}.${uuidv4()}`;
 
     const loyaltyObject = {
       id: loyaltyObjectId,
-      classId: LOYALTY_CLASS_ID,
+      classId: `${ISSUER_ID}.${LOYALTY_CLASS_ID}`, // Class ID must be namespaced with Issuer ID
       state: "active",
       heroImage: {
         sourceUri: {
@@ -84,7 +91,7 @@ export const generateWalletPass = onRequest(
       linksModuleData: {
         uris: [
           {
-            uri: "https://www.example.com",
+            uri: "https://www.example.com", // <<<--- REPLACE WITH YOUR WEBSITE
             description: "Sitio web del programa",
             id: "program_website",
           },
@@ -120,20 +127,32 @@ export const generateWalletPass = onRequest(
       hexFontColor: foregroundColor,
     };
 
-    // In a real implementation, this would be a securely signed JWT
-    const simulatedJwt = `SIMULATED_JWT_PLACEHOLDER.${Buffer.from(JSON.stringify({
-      iss: "your-service-account@your-project.iam.gserviceaccount.com",
+    // 4. Create the JWT for the "Save to Wallet" button
+    const claims = {
+      iss: authClient.email,
       aud: "google",
       typ: "savetowallet",
-      origins: ["https://your-app-domain.com"], // IMPORTANT: Update with your domain
+      origins: [
+        "http://localhost:9002", // For local development
+        "https://senku-loyalty.web.app", // <<<--- REPLACE WITH YOUR PRODUCTION DOMAIN
+      ],
       payload: {
         loyaltyObjects: [loyaltyObject],
       },
-    })).toString("base64")}.SIMULATED_SIGNATURE`;
+    };
 
-    response.json({
-      saveUrl: `https://pay.google.com/gp/v/save/${simulatedJwt}`,
-    });
+    try {
+      const token = await authClient.sign(claims);
+      logger.info("JWT successfully created.");
+
+      // 5. Send the signed JWT to the client
+      response.json({
+        saveUrl: `https://pay.google.com/gp/v/save/${token}`,
+      });
+    } catch (error) {
+      logger.error("Error signing JWT:", error);
+      response.status(500).send("Error generating wallet pass.");
+    }
   }
 );
 
