@@ -22,7 +22,6 @@ import {
   Settings,
 } from "lucide-react";
 import Logo from "@/components/app/shared/logo";
-import { Button } from "@/components/ui/button";
 
 const menuItems = [
   { href: "/admin", label: "Panel", icon: BarChart2 },
@@ -50,15 +49,16 @@ export function AdminSidebar() {
         <SidebarMenu>
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} legacyBehavior passHref>
-                <SidebarMenuButton
-                  isActive={pathname === item.href}
-                  tooltip={item.label}
-                >
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === item.href}
+                tooltip={item.label}
+              >
+                <Link href={item.href}>
                   <item.icon />
                   <span>{item.label}</span>
-                </SidebarMenuButton>
-              </Link>
+                </Link>
+              </SidebarMenuButton>
             </SidebarMenuItem>
           ))}
         </SidebarMenu>
@@ -72,12 +72,12 @@ export function AdminSidebar() {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/" legacyBehavior passHref>
-              <SidebarMenuButton tooltip="Cerrar sesión">
+            <SidebarMenuButton asChild tooltip="Cerrar sesión">
+              <Link href="/">
                 <LogOut />
                 <span>Cerrar sesión</span>
-              </SidebarMenuButton>
-            </Link>
+              </Link>
+            </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
