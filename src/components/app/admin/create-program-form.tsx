@@ -2,9 +2,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { db } from "@/lib/firebase/client";
+import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -35,8 +38,7 @@ import {
   } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { ArrowLeft, Check, DollarSign, Percent, Stamp, Star } from "lucide-react";
-import Link from "next/link";
+import { ArrowLeft, Check, DollarSign, Loader, Percent, Stamp, Star } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 
@@ -71,6 +73,8 @@ type ProgramType = "Puntos" | "Sellos" | "Cashback";
 
 export default function CreateProgramForm() {
     const [step, setStep] = useState(1);
+    const [loading, setLoading] = useState(false);
+    const router = useRouter();
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -86,12 +90,48 @@ export default function CreateProgramForm() {
         },
       });
     
-      function onSubmit(values: z.infer<typeof formSchema>) {
-        console.log(values);
-        toast({
-          title: "Programa Creado",
-          description: "El nuevo programa de lealtad ha sido creado exitosamente.",
-        });
+      async function onSubmit(values: z.infer<typeof formSchema>) {
+        setLoading(true);
+        try {
+            // Estructura de datos para Firestore
+            const programData = {
+                name: values.programName,
+                type: values.programType,
+                status: "Borrador", // Se crea como borrador por defecto
+                members: 0,
+                created: new Date().toISOString().split('T')[0], // Formato YYYY-MM-DD
+                description: values.programDescription || "",
+                rules: {
+                    pointsPerAmount: values.pointsPerAmount || null,
+                    amountForPoints: values.amountForPoints || null,
+                    stampsCount: values.stampsCount || null,
+                    cashbackPercentage: values.cashbackPercentage || null,
+                },
+                design: {
+                    logoText: values.issuerName,
+                    backgroundColor: values.backgroundColor,
+                    foregroundColor: values.foregroundColor,
+                    labelColor: values.labelColor,
+                }
+            };
+    
+            await addDoc(collection(db, "programs"), programData);
+    
+            toast({
+                title: "Programa Creado",
+                description: "El nuevo programa de lealtad ha sido creado como borrador.",
+            });
+            router.push("/admin/programs");
+        } catch (error) {
+            console.error("Error al crear el programa: ", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudo crear el programa. Inténtalo de nuevo.",
+            });
+        } finally {
+            setLoading(false);
+        }
       }
 
     const programType = form.watch("programType");
@@ -432,7 +472,10 @@ export default function CreateProgramForm() {
                         </CardContent>
                         <CardFooter className="flex justify-between">
                             <Button variant="outline" onClick={prevStep}>Anterior</Button>
-                            <Button type="submit">Crear Programa</Button>
+                            <Button type="submit" disabled={loading}>
+                                {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
+                                Crear Programa
+                            </Button>
                         </CardFooter>
                     </Card>
                 )}
@@ -441,5 +484,3 @@ export default function CreateProgramForm() {
     </div>
   );
 }
-
-    
