@@ -33,16 +33,20 @@ import {
 import type { Customer } from "./customer-management";
 import { customerSegments } from "./customer-management";
 
+type CustomerTier = "Oro" | "Plata" | "Bronce";
+
 interface EditCustomerDialogProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  customer: Customer;
-  onCustomerUpdate: (customer: Customer) => void;
+  customer: Customer | null; // Can be null for adding
+  onSave: (data: Omit<Customer, 'id' | 'initials' | 'joined'> & { id?: string }) => void;
 }
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es requerido."),
   email: z.string().email("Debe ser un correo electrónico válido."),
+  tier: z.enum(["Oro", "Plata", "Bronce"]),
+  points: z.coerce.number().min(0, "Los puntos no pueden ser negativos."),
   segment: z.string().min(1, "El segmento es requerido."),
 });
 
@@ -50,41 +54,43 @@ export function EditCustomerDialog({
   isOpen,
   setIsOpen,
   customer,
-  onCustomerUpdate,
+  onSave,
 }: EditCustomerDialogProps) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: customer.name,
-      email: customer.email,
-      segment: customer.segment,
-    },
   });
-  
+
+  const isEditing = !!customer;
+
   useEffect(() => {
-    if (customer) {
+    if (isOpen) {
       form.reset({
-        name: customer.name,
-        email: customer.email,
-        segment: customer.segment,
+        name: customer?.name ?? "",
+        email: customer?.email ?? "",
+        tier: customer?.tier ?? "Bronce",
+        points: customer?.points ?? 0,
+        segment: customer?.segment ?? "",
       });
     }
-  }, [customer, form]);
+  }, [isOpen, customer, form]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
-    onCustomerUpdate({
-        ...customer,
-        ...values,
+    onSave({
+      id: customer?.id,
+      ...values
     });
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Editar Cliente</DialogTitle>
+          <DialogTitle>{isEditing ? "Editar Cliente" : "Agregar Nuevo Cliente"}</DialogTitle>
           <DialogDescription>
-            Realiza cambios en el perfil del cliente. Haz clic en guardar cuando hayas terminado.
+            {isEditing 
+                ? "Realiza cambios en el perfil del cliente." 
+                : "Completa los detalles para crear un nuevo cliente."
+            }
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -96,7 +102,7 @@ export function EditCustomerDialog({
                 <FormItem>
                   <FormLabel>Nombre</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input placeholder="Ej: John Doe" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -109,19 +115,56 @@ export function EditCustomerDialog({
                 <FormItem>
                   <FormLabel>Correo electrónico</FormLabel>
                   <FormControl>
-                    <Input {...field} />
+                    <Input type="email" placeholder="Ej: user@example.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="tier"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Nivel</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Seleccionar nivel" />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="Bronce">Bronce</SelectItem>
+                                <SelectItem value="Plata">Plata</SelectItem>
+                                <SelectItem value="Oro">Oro</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="points"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Puntos</FormLabel>
+                        <FormControl>
+                            <Input type="number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
             <FormField
                 control={form.control}
                 name="segment"
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Segmento</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value}>
                         <FormControl>
                         <SelectTrigger>
                             <SelectValue placeholder="Seleccionar un segmento" />
@@ -139,7 +182,7 @@ export function EditCustomerDialog({
                 />
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancelar</Button>
-              <Button type="submit">Guardar Cambios</Button>
+              <Button type="submit">{isEditing ? "Guardar Cambios" : "Crear Cliente"}</Button>
             </DialogFooter>
           </form>
         </Form>

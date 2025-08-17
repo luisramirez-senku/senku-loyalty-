@@ -1,7 +1,9 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase/client";
 import type { DateRange } from "react-day-picker";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,6 +32,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { DeleteCustomerDialog } from "./delete-customer-dialog";
 import { EditCustomerDialog } from "./edit-customer-dialog";
 import { ViewHistoryDialog } from "./view-history-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "@/hooks/use-toast";
 
 // Tipos de datos
 export type Customer = {
@@ -39,7 +43,7 @@ export type Customer = {
     tier: "Oro" | "Plata" | "Bronce";
     points: number;
     segment: "Alto valor" | "Comprador frecuente" | "Nuevo miembro" | "VIP" | "En riesgo";
-    joined: string;
+    joined: string; // YYYY-MM-DD
     initials: string;
     history?: Transaction[];
 };
@@ -50,71 +54,6 @@ export type Transaction = {
     description: string;
     points: number;
 };
-
-const customersData: Customer[] = [
-  {
-    id: "cust_1",
-    name: "Liam Johnson",
-    email: "liam@example.com",
-    tier: "Oro",
-    points: 12500,
-    segment: "Alto valor",
-    joined: "2023-10-18",
-    initials: "LJ",
-    history: [
-        { id: "t1", date: "2024-05-20", description: "Compra en tienda", points: 150 },
-        { id: "t2", date: "2024-05-15", description: "Canje de recompensa: Café gratis", points: -500 },
-        { id: "t3", date: "2024-05-01", description: "Bono de cumpleaños", points: 1000 },
-    ]
-  },
-  {
-    id: "cust_2",
-    name: "Olivia Smith",
-    email: "olivia@example.com",
-    tier: "Plata",
-    points: 7200,
-    segment: "Comprador frecuente",
-    joined: "2023-11-05",
-    initials: "OS",
-    history: [
-        { id: "t4", date: "2024-05-18", description: "Compra en tienda", points: 80 },
-        { id: "t5", date: "2024-05-11", description: "Compra online", points: 120 },
-    ]
-  },
-  {
-    id: "cust_3",
-    name: "Noah Williams",
-    email: "noah@example.com",
-    tier: "Bronce",
-    points: 1500,
-    segment: "Nuevo miembro",
-    joined: "2024-03-15",
-    initials: "NW",
-    history: [
-        { id: "t6", date: "2024-03-15", description: "Registro en programa", points: 100 },
-    ]
-  },
-  {
-    id: "cust_4",
-    name: "Emma Brown",
-    email: "emma@example.com",
-    tier: "Oro",
-    points: 25000,
-    segment: "VIP",
-    joined: "2022-05-20",
-    initials: "EB"
-  },
-  {
-    id: "cust_5",
-    name: "Ava Jones",
-    email: "ava@example.com",
-    tier: "Plata",
-    points: 5500,
-    segment: "En riesgo",
-    joined: "2023-12-01",
-    initials: "AJ"
-  },
-];
 
 export const customerSegments = ["Alto valor", "Comprador frecuente", "Nuevo miembro", "VIP", "En riesgo"];
 
@@ -128,8 +67,9 @@ export const segmentDescriptions: Record<string, string> = {
 
 
 export default function CustomerManagement() {
-    const [customers, setCustomers] = useState<Customer[]>(customersData);
-    const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>(customersData);
+    const [customers, setCustomers] = useState<Customer[]>([]);
+    const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+    const [loading, setLoading] = useState(true);
     
     const [segmentFilter, setSegmentFilter] = useState<string>("");
     const [dateFilter, setDateFilter] = useState<DateRange | undefined>(undefined);
@@ -139,38 +79,91 @@ export default function CustomerManagement() {
     const [isDeleteOpen, setDeleteOpen] = useState(false);
     const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
+    useEffect(() => {
+        const fetchCustomers = async () => {
+            try {
+                const querySnapshot = await getDocs(collection(db, "customers"));
+                const customersData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Customer));
+                setCustomers(customersData);
+                setFilteredCustomers(customersData);
+            } catch (error) {
+                console.error("Error al obtener los clientes:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "No se pudieron cargar los clientes.",
+                });
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCustomers();
+    }, []);
+
+    const handleAdd = () => {
+        setSelectedCustomer(null);
+        setEditOpen(true);
+    }
+
     const handleEdit = (customer: Customer) => {
         setSelectedCustomer(customer);
         setEditOpen(true);
     }
+
     const handleHistory = (customer: Customer) => {
         setSelectedCustomer(customer);
         setHistoryOpen(true);
     }
+    
     const handleDelete = (customer: Customer) => {
         setSelectedCustomer(customer);
         setDeleteOpen(true);
     }
 
-    const onCustomerUpdate = (updatedCustomer: Customer) => {
-        const updatedList = customers.map(c => c.id === updatedCustomer.id ? updatedCustomer : c);
-        setCustomers(updatedList);
-        // También actualizamos la lista filtrada para reflejar el cambio inmediatamente
-        const updatedFilteredList = filteredCustomers.map(c => c.id === updatedCustomer.id ? updatedCustomer : c);
-        setFilteredCustomers(updatedFilteredList);
-        setEditOpen(false);
+    const onCustomerSave = async (customerData: Omit<Customer, 'id' | 'initials' | 'joined'> & { id?: string }) => {
+        try {
+            if (customerData.id) { // Editing existing customer
+                const customerRef = doc(db, "customers", customerData.id);
+                await updateDoc(customerRef, customerData);
+                const updatedCustomer = { ...customers.find(c => c.id === customerData.id)!, ...customerData };
+                const updatedList = customers.map(c => c.id === customerData.id ? updatedCustomer : c);
+                setCustomers(updatedList);
+                applyFilters(segmentFilter, dateFilter, updatedList);
+                 toast({ title: "Cliente Actualizado", description: "Los datos del cliente han sido guardados." });
+            } else { // Adding new customer
+                const initials = customerData.name.split(' ').map(n => n[0]).join('');
+                const joined = new Date().toISOString().split('T')[0];
+                const newCustomerData = { ...customerData, initials, joined };
+                const docRef = await addDoc(collection(db, "customers"), newCustomerData);
+                const newCustomer = { ...newCustomerData, id: docRef.id };
+                const updatedList = [...customers, newCustomer];
+                setCustomers(updatedList);
+                applyFilters(segmentFilter, dateFilter, updatedList);
+                 toast({ title: "Cliente Agregado", description: "El nuevo cliente ha sido creado." });
+            }
+            setEditOpen(false);
+        } catch (error) {
+            console.error("Error guardando el cliente:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el cliente."});
+        }
     };
 
-    const onCustomerDelete = (customerId: string) => {
-        const updatedList = customers.filter(c => c.id !== customerId);
-        setCustomers(updatedList);
-        const updatedFilteredList = filteredCustomers.filter(c => c.id !== customerId);
-        setFilteredCustomers(updatedFilteredList);
-        setDeleteOpen(false);
+    const onCustomerDelete = async (customerId: string) => {
+       try {
+            await deleteDoc(doc(db, "customers", customerId));
+            const updatedList = customers.filter(c => c.id !== customerId);
+            setCustomers(updatedList);
+            applyFilters(segmentFilter, dateFilter, updatedList);
+            setDeleteOpen(false);
+            toast({ title: "Cliente Eliminado", description: "El cliente ha sido eliminado permanentemente." });
+        } catch (error) {
+            console.error("Error eliminando el cliente:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el cliente." });
+        }
     }
 
-    const applyFilters = (segment: string, dateRange?: DateRange) => {
-        let updatedCustomers = customers;
+    const applyFilters = (segment: string, dateRange: DateRange | undefined, sourceList: Customer[]) => {
+        let updatedCustomers = sourceList;
         if (segment) {
             updatedCustomers = updatedCustomers.filter(c => c.segment === segment);
         }
@@ -192,12 +185,12 @@ export default function CustomerManagement() {
 
     const handleSegmentChange = (segment: string) => {
         setSegmentFilter(segment);
-        applyFilters(segment, dateFilter);
+        applyFilters(segment, dateFilter, customers);
     }
 
     const handleDateChange = (dateRange?: DateRange) => {
         setDateFilter(dateRange);
-        applyFilters(segmentFilter, dateRange);
+        applyFilters(segmentFilter, dateRange, customers);
     }
     
     const clearFilters = () => {
@@ -216,7 +209,7 @@ export default function CustomerManagement() {
                 Administre a sus clientes y vea el estado de su lealtad.
             </p>
         </div>
-        <Button>
+        <Button onClick={handleAdd}>
           <PlusCircle className="mr-2 h-4 w-4" /> Agregar Cliente
         </Button>
       </div>
@@ -282,7 +275,39 @@ export default function CustomerManagement() {
 
     <TooltipProvider>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {filteredCustomers.map((customer) => (
+        {loading ? (
+             Array.from({ length: 8 }).map((_, i) => (
+                <Card key={i}>
+                    <CardHeader>
+                        <div className="flex items-center gap-4">
+                            <Skeleton className="h-12 w-12 rounded-full" />
+                            <div className="space-y-2">
+                                <Skeleton className="h-4 w-32" />
+                                <Skeleton className="h-3 w-24" />
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                       <div className="flex justify-between items-center">
+                           <Skeleton className="h-5 w-16 rounded-full" />
+                           <Skeleton className="h-5 w-24" />
+                       </div>
+                       <div className="space-y-2">
+                           <Skeleton className="h-4 w-full" />
+                           <Skeleton className="h-4 w-full" />
+                       </div>
+                    </CardContent>
+                    <CardFooter className="border-t pt-4">
+                       <div className="flex w-full justify-center gap-2">
+                            <Skeleton className="h-9 w-full" />
+                            <Skeleton className="h-9 w-full" />
+                            <Skeleton className="h-9 w-9" />
+                       </div>
+                    </CardFooter>
+                </Card>
+             ))
+        ) : (
+        filteredCustomers.map((customer) => (
             <Card key={customer.id} className="flex flex-col">
                 <CardHeader>
                     <div className="flex items-center gap-4">
@@ -347,10 +372,10 @@ export default function CustomerManagement() {
                     </div>
                 </CardFooter>
             </Card>
-        ))}
+        )))}
       </div>
       </TooltipProvider>
-      {filteredCustomers.length === 0 && (
+      {!loading && filteredCustomers.length === 0 && (
           <div className="text-center text-muted-foreground py-16">
               <p>No se encontraron clientes que coincidan con los filtros seleccionados.</p>
           </div>
@@ -358,14 +383,14 @@ export default function CustomerManagement() {
     </div>
 
     {/* Dialogs */}
+    <EditCustomerDialog 
+        isOpen={isEditOpen} 
+        setIsOpen={setEditOpen} 
+        customer={selectedCustomer}
+        onSave={onCustomerSave}
+    />
     {selectedCustomer && (
         <>
-            <EditCustomerDialog 
-                isOpen={isEditOpen} 
-                setIsOpen={setEditOpen} 
-                customer={selectedCustomer}
-                onCustomerUpdate={onCustomerUpdate}
-            />
             <ViewHistoryDialog 
                 isOpen={isHistoryOpen} 
                 setIsOpen={setHistoryOpen} 

@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Customer } from "./customer-management";
+import { Button } from "@/components/ui/button";
 
 interface DeleteCustomerDialogProps {
   isOpen: boolean;
@@ -38,8 +39,10 @@ export function DeleteCustomerDialog({
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={() => onCustomerDelete(customer.id)}>
-            Sí, eliminar cliente
+          <AlertDialogAction asChild>
+            <Button variant="destructive" onClick={() => onCustomerDelete(customer.id)}>
+              Sí, eliminar cliente
+            </Button>
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
