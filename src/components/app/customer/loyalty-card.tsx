@@ -12,6 +12,8 @@ import Logo from "../shared/logo";
 import { Star } from "lucide-react";
 
 export default function LoyaltyCard() {
+  const qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=CUST-007";
+
   return (
     <Card className="overflow-hidden">
       <div className="bg-primary text-primary-foreground p-6 relative">
@@ -24,11 +26,10 @@ export default function LoyaltyCard() {
                 </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-                <Logo className="h-8 w-8 text-primary-foreground" />
-                <span className="text-lg font-semibold">Senku</span>
+                <Image src={qrCodeUrl} alt="QR Code" width={80} height={80} className="rounded-md bg-white p-1" />
             </div>
         </div>
-        <div className="relative z-10 mt-8 flex items-end justify-between">
+        <div className="relative z-10 mt-4 flex items-end justify-between">
             <div>
                 <p className="text-sm text-primary-foreground/80">Saldo de puntos</p>
                 <p className="text-4xl font-bold">25,000</p>
