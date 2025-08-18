@@ -7,9 +7,10 @@ import { db } from "@/lib/firebase/client";
 import { collection, query, where, getDocs, collectionGroup, doc, getDoc } from "firebase/firestore";
 import type { Customer } from "@/components/app/admin/customer-management";
 import { Card, CardContent } from "@/components/ui/card";
-import { Star } from "lucide-react";
+import { Star, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
+import { Button } from "@/components/ui/button";
 
 interface CustomerProgram extends Customer {
     tenantId: string;
@@ -38,7 +39,7 @@ function ProgramsContent() {
         
         if (querySnapshot.empty) {
             // Handle case where no customer is found, maybe redirect or show message
-            router.push('/login');
+            router.push('/customer/find');
             return;
         }
 
@@ -124,7 +125,7 @@ function ProgramsContent() {
            {!loading && programs.length === 0 && (
                 <div className="col-span-full text-center text-muted-foreground py-10">
                     <p>No se encontraron programas para el correo: {email}</p>
-                    <Button variant="link" onClick={() => router.push('/login')}>Volver</Button>
+                    <Button variant="link" onClick={() => router.push('/customer/find')}>Volver</Button>
                 </div>
             )}
        </div>
