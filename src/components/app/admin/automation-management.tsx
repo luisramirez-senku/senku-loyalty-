@@ -11,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, Workflow, ChevronRight, Zap, Users, Send, ToggleRight, ToggleLeft } from "lucide-react";
+import { PlusCircle, Workflow, ChevronRight, Zap, Users, Send, ToggleRight, ToggleLeft, Mail } from "lucide-react";
 import { CreateAutomationSheet } from "./create-automation-sheet";
 import { Badge } from "@/components/ui/badge";
 
@@ -37,7 +37,7 @@ const automations = [
       value: "Nuevo miembro",
     },
     action: {
-      type: "Enviar notificación push",
+      type: "Enviar correo electrónico",
       value: "Oferta de primer café gratis",
     },
     status: "Activa",
@@ -67,6 +67,9 @@ const TriggerIcon = ({ type }: { type: string }) => {
 const ActionIcon = ({ type }: { type: string }) => {
     if (type === 'Enviar notificación push') {
         return <Send className="h-5 w-5 text-muted-foreground" />
+    }
+    if (type === 'Enviar correo electrónico') {
+        return <Mail className="h-5 w-5 text-muted-foreground" />
     }
     return <Zap className="h-5 w-5 text-muted-foreground" />;
 }

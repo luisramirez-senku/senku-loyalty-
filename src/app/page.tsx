@@ -3,14 +3,14 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import Logo from "@/components/app/shared/logo";
-import { ArrowRight, Check, Sparkles, Star, Users, CreditCard, Bot, Palette, Workflow, X, BrainCircuit } from "lucide-react";
+import { ArrowRight, Check, Sparkles, Star, Users, CreditCard, Bot, Palette, Workflow, X, BrainCircuit, Mail } from "lucide-react";
 import Image from "next/image";
 
 const whySenkuFeatures = [
     {
         icon: <Palette className="h-8 w-8 mb-4 text-primary" />,
         title: "Experiencia Moderna",
-        description: "Ofrece a tus clientes pases de lealtad digitales para Apple y Google Wallet. Moderno, sin fricciones y siempre en su bolsillo.",
+        description: "Ofrece a tus clientes una web app de lealtad accesible desde cualquier dispositivo. Moderno, sin fricciones y siempre disponible.",
     },
     {
         icon: <Workflow className="h-8 w-8 mb-4 text-primary" />,
@@ -45,13 +45,14 @@ const aiFeatures = [
 const pricingPlans = [
     {
         name: "Esencial",
-        price: "$29",
+        price: "$19",
         priceMonthly: true,
         features: [
             "1 Programa de Lealtad",
             "1 Sucursal",
             "Tarjetas Digitales Ilimitadas",
             "Segmentación de Clientes",
+            "Notificaciones por Correo",
             "Funcionalidades de IA",
             "Soporte por correo electrónico"
         ],
@@ -59,13 +60,14 @@ const pricingPlans = [
     },
     {
         name: "Crecimiento",
-        price: "$79",
+        price: "$49",
         priceMonthly: true,
         features: [
             "5 Programas de Lealtad",
             "Hasta 5 Sucursales",
             "Tarjetas Digitales Ilimitadas",
             "Segmentación de Clientes",
+            "Notificaciones por Correo",
             "Funcionalidades de IA",
             "Soporte prioritario"
         ],
@@ -96,7 +98,7 @@ const testimonials = [
         avatar: "https://placehold.co/100x100.png?text=AT"
     },
     {
-        quote: "Pasamos de tarjetas de cartón a pases digitales de Wallet, y nuestros clientes están encantados. La tasa de retención ha subido un 25%.",
+        quote: "Pasamos de tarjetas de cartón a una web app moderna, y nuestros clientes están encantados. La tasa de retención ha subido un 25%.",
         name: "Carlos Vega",
         role: "Gerente de 'Moda Urbana'",
         avatar: "https://placehold.co/100x100.png?text=CV"

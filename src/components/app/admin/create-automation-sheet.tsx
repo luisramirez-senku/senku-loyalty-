@@ -210,6 +210,7 @@ export function CreateAutomationSheet({ isOpen, setIsOpen }: CreateAutomationShe
                         </FormControl>
                         <SelectContent>
                             <SelectItem value="send_push_notification">Enviar notificación push con oferta</SelectItem>
+                            <SelectItem value="send_email">Enviar correo electrónico con oferta</SelectItem>
                         </SelectContent>
                         </Select>
                         <FormMessage />
