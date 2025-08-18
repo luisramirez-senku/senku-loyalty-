@@ -48,6 +48,7 @@ export type Customer = {
     joined: string; // YYYY-MM-DD
     initials: string;
     history?: Transaction[];
+    fcmToken?: string;
 };
 
 export type Transaction = {
@@ -131,16 +132,16 @@ export default function CustomerManagement() {
     const onCustomerSave = async (customerData: Omit<Customer, 'id' | 'initials' | 'joined'> & { id?: string }) => {
         if (!user) return;
         try {
-            if (customerData.id) { // Editing existing customer
-                const customerRef = doc(db, "tenants", user.uid, "customers", customerData.id);
-                await updateDoc(customerRef, customerData);
-                const updatedCustomer = { ...customers.find(c => c.id === customerData.id)!, ...customerData };
-                const updatedList = customers.map(c => c.id === customerData.id ? updatedCustomer : c);
+            const { id, ...dataToAdd } = customerData;
+            if (id) { // Editing existing customer
+                const customerRef = doc(db, "tenants", user.uid, "customers", id);
+                await updateDoc(customerRef, dataToAdd);
+                const updatedCustomer = { ...customers.find(c => c.id === id)!, ...dataToAdd };
+                const updatedList = customers.map(c => c.id === id ? updatedCustomer : c);
                 setCustomers(updatedList);
                 applyFilters(segmentFilter, dateFilter, updatedList);
                  toast({ title: "Cliente Actualizado", description: "Los datos del cliente han sido guardados." });
             } else { // Adding new customer
-                const { id, ...dataToAdd } = customerData; // Destructure to remove id
                 const initials = dataToAdd.name.split(' ').map(n => n[0]).join('');
                 const joined = new Date().toISOString().split('T')[0];
                 const newCustomerData = { ...dataToAdd, initials, joined };

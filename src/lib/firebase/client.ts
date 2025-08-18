@@ -3,6 +3,7 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getMessaging } from "firebase/messaging";
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -21,4 +22,12 @@ const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-export { app, db, auth };
+// Initialize Firebase Cloud Messaging and get a reference to the service
+const messaging = () => {
+    if (typeof window !== "undefined" && getApps().length > 0) {
+        return getMessaging(app);
+    }
+    return null;
+}
+
+export { app, db, auth, messaging };

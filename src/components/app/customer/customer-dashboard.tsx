@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase/client";
+import { collection, getDocs, doc, getDoc, updateDoc } from "firebase/firestore";
+import { db, messaging } from "@/lib/firebase/client";
 import LoyaltyCard from "./loyalty-card";
 import VirtualAssistant from "./virtual-assistant";
 import { Gift, History } from "lucide-react";
@@ -20,6 +20,8 @@ import type { Customer } from "@/components/app/admin/customer-management";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { getToken } from "firebase/messaging";
+import { useToast } from "@/hooks/use-toast";
 
 
 interface CustomerDashboardProps {
@@ -31,8 +33,40 @@ export default function CustomerDashboard({ customerId }: CustomerDashboardProps
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [tenantId, setTenantId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
   useEffect(() => {
+    const requestNotificationPermission = async (currentTenantId: string, currentCustomerId: string) => {
+        if (!messaging) return;
+        const messagingInstance = messaging();
+        if (!messagingInstance) return;
+
+        try {
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                console.log('Notification permission granted.');
+                const fcmToken = await getToken(messagingInstance, { vapidKey: process.env.NEXT_PUBLIC_VAPID_KEY });
+
+                if (fcmToken) {
+                    console.log('FCM Token:', fcmToken);
+                    const customerRef = doc(db, "tenants", currentTenantId, "customers", currentCustomerId);
+                    await updateDoc(customerRef, { fcmToken: fcmToken });
+                } else {
+                    console.log('No registration token available. Request permission to generate one.');
+                }
+            } else {
+                console.log('Unable to get permission to notify.');
+            }
+        } catch (error) {
+            console.error('An error occurred while retrieving token. ', error);
+            toast({
+                variant: 'destructive',
+                title: 'Error de notificaciones',
+                description: 'No se pudieron habilitar las notificaciones push.'
+            });
+        }
+    };
+
     const fetchData = async () => {
         if (!customerId) {
             setLoading(false);
@@ -49,8 +83,13 @@ export default function CustomerDashboard({ customerId }: CustomerDashboardProps
           const customerRef = doc(db, 'tenants', tenantDoc.id, 'customers', customerId);
           const customerSnap = await getDoc(customerRef);
           if (customerSnap.exists()) {
-            foundCustomer = {id: customerSnap.id, ...customerSnap.data()} as Customer;
+            const customerData = {id: customerSnap.id, ...customerSnap.data()} as Customer;
+            foundCustomer = customerData;
             foundTenantId = tenantDoc.id;
+             // Request permission only if token is not already stored
+            if (!customerData.fcmToken) {
+                await requestNotificationPermission(foundTenantId, customerSnap.id);
+            }
             break;
           }
         }
@@ -74,7 +113,7 @@ export default function CustomerDashboard({ customerId }: CustomerDashboardProps
       }
     };
     fetchData();
-  }, [customerId]);
+  }, [customerId, toast]);
 
 
   return (
