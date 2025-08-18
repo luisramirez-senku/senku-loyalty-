@@ -391,5 +391,3 @@ export const paypalWebhookHandler = onRequest(async (request, response) => {
 });
 
     
-
-    
