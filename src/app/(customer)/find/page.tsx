@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase/client';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, collectionGroup } from 'firebase/firestore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,27 +29,20 @@ export default function CustomerLookupPage() {
     setLoading(true);
 
     try {
-        let customerFound = false;
-        // Query all tenants
-        const tenantsCollection = collection(db, 'tenants');
-        const tenantsSnapshot = await getDocs(tenantsCollection);
+        const customersRef = collectionGroup(db, 'customers');
+        const q = query(customersRef, where('email', '==', email.toLowerCase()));
+        const querySnapshot = await getDocs(q);
 
-        for (const tenantDoc of tenantsSnapshot.docs) {
-            const customersRef = collection(db, 'tenants', tenantDoc.id, 'customers');
-            const q = query(customersRef, where('email', '==', email.toLowerCase()));
-            const querySnapshot = await getDocs(q);
-
-            if (!querySnapshot.empty) {
-                const customerDoc = querySnapshot.docs[0];
-                customerFound = true;
-                router.push(`/customer/${customerDoc.id}`);
-                toast({ title: '¡Éxito!', description: 'Redirigiendo a tu panel de lealtad.' });
-                break; // Exit loop once customer is found
-            }
-        }
-        
-        if (!customerFound) {
+        if (querySnapshot.empty) {
             toast({ variant: 'destructive', title: 'No encontrado', description: 'No pudimos encontrar una cuenta con ese correo electrónico.' });
+        } else if (querySnapshot.size === 1) {
+            // Only one program, redirect directly
+            const customerDoc = querySnapshot.docs[0];
+            router.push(`/customer/${customerDoc.id}`);
+            toast({ title: '¡Éxito!', description: 'Redirigiendo a tu panel de lealtad.' });
+        } else {
+            // Multiple programs, redirect to selection page
+            router.push(`/programs?email=${encodeURIComponent(email)}`);
         }
 
     } catch (error) {
