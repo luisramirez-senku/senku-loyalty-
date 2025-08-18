@@ -68,7 +68,7 @@ export default function CustomerLookupPage() {
         </Link>
         <Card className="w-full max-w-md">
             <CardHeader>
-                <CardTitle>Acceso para Clientes</CardTitle>
+                <CardTitle>Consulta tus Puntos</CardTitle>
                 <CardDescription>
                     Ingresa tu correo electrónico para ver tu tarjeta de lealtad, puntos y recompensas.
                 </CardDescription>

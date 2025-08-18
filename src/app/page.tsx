@@ -122,10 +122,10 @@ export default function Home() {
             </Link>
             <div className="flex flex-1 items-center justify-end gap-2">
                  <Button variant="ghost" asChild>
-                    <Link href="/customer/find">Acceso Clientes</Link>
+                    <Link href="/customer/find">Soy Cliente</Link>
                 </Button>
                  <Button variant="ghost" asChild>
-                    <Link href="/login">Iniciar Sesión (Admin)</Link>
+                    <Link href="/login">Acceso Negocios</Link>
                 </Button>
                 <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     <Link href="/signup">Empezar Prueba Gratuita</Link>
