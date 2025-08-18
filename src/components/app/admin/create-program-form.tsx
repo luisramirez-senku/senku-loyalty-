@@ -64,11 +64,6 @@ const formSchema = z.object({
   logoText: z.string().optional(),
   foregroundColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
   backgroundColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
-  labelColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
-
-  logoImage: z.any().optional(),
-  iconImage: z.any().optional(),
-  stripImage: z.any().optional(),
   
   barcodeType: z.string().min(1, "El tipo de código de barras es requerido."),
 });
@@ -93,9 +88,8 @@ export default function CreateProgramForm() {
             stampsCount: null,
             cashbackPercentage: null,
             logoText: "",
-            foregroundColor: "#ffffff",
-            backgroundColor: "#000000",
-            labelColor: "#ffffff",
+            foregroundColor: "#FFFFFF",
+            backgroundColor: "#2962FF",
             barcodeType: "PKBarcodeFormatQR",
         },
       });
@@ -114,7 +108,7 @@ export default function CreateProgramForm() {
             const newProgramId = newProgramRef.id;
 
             // 1. Call the Cloud Function to create the Wallet Class
-            toast({ title: "Creando plantilla de Wallet...", description: "Por favor espere." });
+            toast({ title: "Paso 1: Creando plantilla de Wallet...", description: "Por favor espere." });
             const classResponse = await fetch(CREATE_WALLET_CLASS_FUNCTION_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -133,7 +127,7 @@ export default function CreateProgramForm() {
                 throw new Error(`Error al crear la clase de Wallet: ${errorData}`);
             }
             
-            toast({ title: "Plantilla creada", description: "Guardando el programa en la base de datos." });
+            toast({ title: "Paso 2: Plantilla creada", description: "Guardando el programa en la base de datos." });
 
             // 2. Save the program to Firestore with the new ID
             const programData = {
@@ -153,7 +147,6 @@ export default function CreateProgramForm() {
                     logoText: values.issuerName,
                     backgroundColor: values.backgroundColor,
                     foregroundColor: values.foregroundColor,
-                    labelColor: values.labelColor,
                 }
             };
     
@@ -169,7 +162,7 @@ export default function CreateProgramForm() {
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: `No se pudo crear el programa. ${error instanceof Error ? error.message : ''}`,
+                description: `${error instanceof Error ? error.message : 'No se pudo crear el programa.'}`,
             });
         } finally {
             setLoading(false);
@@ -388,7 +381,7 @@ export default function CreateProgramForm() {
                             <CardTitle>Diseño del Pase de Wallet</CardTitle>
                             <CardDescription>Personalice la apariencia de la tarjeta de lealtad digital en Apple Wallet y Google Wallet.</CardDescription>
                         </CardHeader>
-                        <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                        <CardContent className="grid gap-6 md:grid-cols-2">
                             <FormField
                                 control={form.control}
                                 name="logoText"
@@ -403,6 +396,29 @@ export default function CreateProgramForm() {
                                 )}
                             />
                             <FormField
+                                control={form.control}
+                                name="barcodeType"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Formato del Código de Barras</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Seleccione un formato" />
+                                        </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            <SelectItem value="PKBarcodeFormatQR">Código QR</SelectItem>
+                                            <SelectItem value="PKBarcodeFormatPDF417">PDF417</SelectItem>
+                                            <SelectItem value="PKBarcodeFormatAztec">Aztec</SelectItem>
+                                            <SelectItem value="PKBarcodeFormatCode128">Code 128</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                             <FormField
                                 control={form.control}
                                 name="backgroundColor"
                                 render={({ field }) => (
@@ -424,89 +440,6 @@ export default function CreateProgramForm() {
                                     <FormControl>
                                         <Input type="color" {...field} />
                                     </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="labelColor"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Color de Etiqueta</FormLabel>
-                                    <FormControl>
-                                        <Input type="color" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <div className="md:col-span-2 lg:col-span-3 grid md:grid-cols-3 gap-6">
-                                <FormField
-                                    control={form.control}
-                                    name="logoImage"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Logo</FormLabel>
-                                        <FormControl>
-                                            <Input type="file" accept="image/png" onChange={(e) => field.onChange(e.target.files)} />
-                                        </FormControl>
-                                        <FormDescription>PNG, requerido (320x320px rec.).</FormDescription>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="iconImage"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Ícono</FormLabel>
-                                        <FormControl>
-                                            <Input type="file" accept="image/png" onChange={(e) => field.onChange(e.target.files)} />
-                                        </FormControl>
-                                        <FormDescription>PNG, requerido (58x58px rec.).</FormDescription>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="stripImage"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Imagen de Banner</FormLabel>
-                                        <FormControl>
-                                            <Input type="file" accept="image/png" onChange={(e) => field.onChange(e.target.files)} />
-                                        </FormControl>
-                                        <FormDescription>PNG, opcional (750x288px rec.).</FormDescription>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            </div>
-
-                            <Separator className="md:col-span-2 lg:col-span-3" />
-
-                            <FormField
-                                control={form.control}
-                                name="barcodeType"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Formato del Código de Barras</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione un formato" />
-                                        </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="PKBarcodeFormatQR">Código QR</SelectItem>
-                                            <SelectItem value="PKBarcodeFormatPDF417">PDF417</SelectItem>
-                                            <SelectItem value="PKBarcodeFormatAztec">Aztec</SelectItem>
-                                            <SelectItem value="PKBarcodeFormatCode128">Code 128</SelectItem>
-                                        </SelectContent>
-                                    </Select>
                                     <FormMessage />
                                     </FormItem>
                                 )}
