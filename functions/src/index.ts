@@ -59,7 +59,7 @@ export const createWalletClass = onRequest(
       logger.info(`Loyalty Class ${classId} already exists.`);
       response.json({walletClassId: programId});
       return;
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err.response && err.response.status !== 404) {
         logger.error("Error checking for wallet class:", err.response?.data || err.message);
         response.status(500).send(`Error checking wallet class: ${err.response?.data?.error?.message || err.message}`);
@@ -118,7 +118,7 @@ export const createWalletClass = onRequest(
 
       logger.info("Successfully created Loyalty Class:", apiResponse.data);
       response.json({walletClassId: programId});
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error("Error creating wallet class:", error.response?.data?.error || error.message);
       const errorMessage = error.response?.data?.error?.message || "Unknown error creating wallet class.";
       response.status(500).send(`Error creating wallet class: ${errorMessage}`);
