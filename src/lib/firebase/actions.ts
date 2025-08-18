@@ -1,8 +1,12 @@
-
 'use server';
 
-import { db, auth as adminAuth } from '@/lib/firebase/server';
-import { writeBatch, doc, collection } from 'firebase/firestore';
+import '@/lib/firebase/server'; // Ensures server is initialized
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore, writeBatch, doc, collection } from 'firebase-admin/firestore';
+
+const adminAuth = getAuth();
+const db = getFirestore();
+
 
 // This is a server action, it will only run on the server.
 export const createNewTenant = async (tenantId: string, businessName: string, adminEmail: string, signupData: Record<string, any>) => {
