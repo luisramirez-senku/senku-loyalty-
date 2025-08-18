@@ -3,9 +3,9 @@
 
 import { SidebarProvider, Sidebar, SidebarInset } from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/app/admin/sidebar";
-import withAuth from "@/components/app/shared/with-auth";
+// Removed withAuth from here to prevent redirect loop on login page
 
-function AdminLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -19,5 +19,3 @@ function AdminLayout({
     </SidebarProvider>
   );
 }
-
-export default withAuth(AdminLayout);

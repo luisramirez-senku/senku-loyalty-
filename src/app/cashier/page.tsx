@@ -16,4 +16,5 @@ function CashierPage() {
   );
 }
 
+// Protect this page with the Auth HOC
 export default withAuth(CashierPage);
