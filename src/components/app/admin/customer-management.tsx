@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -139,9 +140,10 @@ export default function CustomerManagement() {
                 applyFilters(segmentFilter, dateFilter, updatedList);
                  toast({ title: "Cliente Actualizado", description: "Los datos del cliente han sido guardados." });
             } else { // Adding new customer
-                const initials = customerData.name.split(' ').map(n => n[0]).join('');
+                const { id, ...dataToAdd } = customerData; // Destructure to remove id
+                const initials = dataToAdd.name.split(' ').map(n => n[0]).join('');
                 const joined = new Date().toISOString().split('T')[0];
-                const newCustomerData = { ...customerData, initials, joined };
+                const newCustomerData = { ...dataToAdd, initials, joined };
                 const customersCollection = collection(db, "tenants", user.uid, "customers");
                 const docRef = await addDoc(customersCollection, newCustomerData);
                 const newCustomer = { ...newCustomerData, id: docRef.id };
