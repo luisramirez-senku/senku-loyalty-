@@ -52,22 +52,19 @@ export const createWalletClass = onRequest(
 
     // 3. Check if the class already exists
     try {
-      const classGetResponse = await authClient.request({
+      await authClient.request({
         url: `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyClass/${classId}`,
         method: "GET",
       });
       logger.info(`Loyalty Class ${classId} already exists.`);
-      // If it exists, return the ID
       response.json({walletClassId: programId});
       return;
     } catch (err: any) {
       if (err.response && err.response.status !== 404) {
-        // If error is not 404 (Not Found), then something else went wrong.
         logger.error("Error checking for wallet class:", err.response?.data || err.message);
         response.status(500).send(`Error checking wallet class: ${err.response?.data?.error?.message || err.message}`);
         return;
       }
-      // If error IS 404, that's good. It means we can create it.
       logger.info(`Loyalty Class ${classId} does not exist. Creating it now.`);
     }
 
@@ -120,12 +117,11 @@ export const createWalletClass = onRequest(
       });
 
       logger.info("Successfully created Loyalty Class:", apiResponse.data);
-
-      // 6. Send the new class ID (the part after the issuer ID) back to the client
       response.json({walletClassId: programId});
     } catch (error: any) {
-      logger.error("Error creating wallet class:", error.response?.data || error.message);
-      response.status(500).send(`Error creating wallet class: ${error.response?.data?.error?.message || error.message}`);
+      logger.error("Error creating wallet class:", error.response?.data?.error || error.message);
+      const errorMessage = error.response?.data?.error?.message || "Unknown error creating wallet class.";
+      response.status(500).send(`Error creating wallet class: ${errorMessage}`);
     }
   }
 );
@@ -393,5 +389,7 @@ export const paypalWebhookHandler = onRequest(async (request, response) => {
     response.status(500).send("Internal Server Error");
   }
 });
+
+    
 
     

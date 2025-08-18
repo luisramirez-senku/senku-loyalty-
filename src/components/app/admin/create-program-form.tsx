@@ -161,8 +161,9 @@ export default function CreateProgramForm() {
             console.error("Error al crear el programa: ", error);
             toast({
                 variant: "destructive",
-                title: "Error",
-                description: `${error instanceof Error ? error.message : 'No se pudo crear el programa.'}`,
+                title: "Error al crear el programa",
+                description: `${error instanceof Error ? error.message : 'No se pudo crear el programa. Revise los logs de la función para más detalles.'}`,
+                duration: 9000,
             });
         } finally {
             setLoading(false);
@@ -459,5 +460,7 @@ export default function CreateProgramForm() {
     </div>
   );
 }
+
+    
 
     
