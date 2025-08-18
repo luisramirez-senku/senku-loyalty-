@@ -10,7 +10,7 @@ export default function CustomerPage() {
 
   useEffect(() => {
     // Redirect to the customer lookup page
-    router.replace('/customer/find');
+    router.replace('/find');
   }, [router]);
 
   return null; // Render nothing while redirecting

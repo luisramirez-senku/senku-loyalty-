@@ -122,7 +122,7 @@ export default function Home() {
             </Link>
             <div className="flex flex-1 items-center justify-end gap-2">
                  <Button variant="ghost" asChild>
-                    <Link href="/customer/find">Soy Cliente</Link>
+                    <Link href="/find">Soy Cliente</Link>
                 </Button>
                  <Button variant="ghost" asChild>
                     <Link href="/login">Acceso Negocios</Link>
