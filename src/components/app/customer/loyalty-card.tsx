@@ -25,6 +25,7 @@ interface LoyaltyCardProps {
 export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [program, setProgram] = useState<Program | null>(null);
+  const [logoUrl, setLogoUrl] = useState("https://placehold.co/40x40.png");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,13 +35,12 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
           return;
       }
       try {
-        // This is a complex query to find the tenant that owns this customer.
-        // In a real-world scenario with proper indexing, this can be efficient.
         const tenantsCollection = collection(db, 'tenants');
         const tenantsSnapshot = await getDocs(tenantsCollection);
         let foundCustomer: Customer | null = null;
         let foundTenantId: string | null = null;
         let foundProgram: Program | null = null;
+        let tenantData: any = null;
 
         for (const tenantDoc of tenantsSnapshot.docs) {
           const customerRef = doc(db, 'tenants', tenantDoc.id, 'customers', customerId);
@@ -49,8 +49,8 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
           if (customerSnap.exists()) {
             foundCustomer = { id: customerSnap.id, ...customerSnap.data() } as Customer;
             foundTenantId = tenantDoc.id;
+            tenantData = tenantDoc.data();
             
-            // Once customer is found, get their associated program
             const programId = (foundCustomer as any).programId;
             if (programId) {
                 const programRef = doc(db, "tenants", foundTenantId, "programs", programId);
@@ -59,13 +59,16 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
                     foundProgram = { id: programSnap.id, ...programSnap.data() } as Program;
                 }
             }
-            break; // Stop searching once the customer is found
+            break; 
           }
         }
         
         if (foundCustomer && foundTenantId) {
           setCustomer(foundCustomer);
           setProgram(foundProgram);
+          if (tenantData?.logoUrl) {
+            setLogoUrl(tenantData.logoUrl);
+          }
         } else {
           console.log("No such customer!");
         }
@@ -111,6 +114,7 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
 
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${customer.id}`;
   const programDesign = (program as any)?.design || {};
+  const logoText = (program as any)?.design?.logoText || 'Logo';
 
   return (
     <Card className="overflow-hidden">
@@ -124,8 +128,11 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
         <div className="absolute inset-0 bg-grid-slate-100/10 [mask-image:linear-gradient(to_bottom,white,transparent)]"></div>
         <div className="relative z-10 flex justify-between items-start">
             <div>
-                <CardTitle className="text-2xl">{customer.name}</CardTitle>
-                <CardDescription className="text-primary-foreground/80">
+                <CardTitle className="text-2xl flex items-center gap-3">
+                  <Image src={logoUrl} alt={logoText} width={40} height={40} className="rounded-md bg-white p-1" data-ai-hint="logo" />
+                  {customer.name}
+                </CardTitle>
+                <CardDescription className="text-primary-foreground/80 mt-1">
                     Miembro de Nivel {customer.tier}
                 </CardDescription>
             </div>
@@ -147,5 +154,3 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
     </Card>
   );
 }
-
-    

@@ -40,6 +40,7 @@ const createNewTenant = async (tenantId: string, businessName: string, adminEmai
         plan: "Crecimiento",
         status: "Prueba",
         trialEnds: trialEndDate,
+        logoUrl: "https://placehold.co/100x100.png", // Default placeholder
         // Store the survey and billing info
         survey: {
             industry: signupData.industry,

@@ -12,23 +12,28 @@ export default function RegistrationPage({ params }: { params: { programId: stri
   const searchParams = useSearchParams();
   const tenantId = searchParams.get('tenant');
   const [tenantName, setTenantName] = useState("[Nombre del Comercio]");
+  const [logoUrl, setLogoUrl] = useState("https://placehold.co/100x100.png");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchTenantName = async () => {
+    const fetchTenantData = async () => {
       if (tenantId) {
         try {
           const tenantDoc = await getDoc(doc(db, "tenants", tenantId));
           if (tenantDoc.exists()) {
-            setTenantName(tenantDoc.data().name);
+            const data = tenantDoc.data();
+            setTenantName(data.name);
+            if (data.logoUrl) {
+              setLogoUrl(data.logoUrl);
+            }
           }
         } catch (error) {
-          console.error("Error fetching tenant name:", error);
+          console.error("Error fetching tenant data:", error);
         }
       }
       setLoading(false);
     };
-    fetchTenantName();
+    fetchTenantData();
   }, [tenantId]);
 
   if (loading) {
@@ -42,7 +47,7 @@ export default function RegistrationPage({ params }: { params: { programId: stri
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
        <div className="flex flex-col items-center gap-4 mb-8">
-        <Image src="https://placehold.co/100x100.png" alt="Logo del Comercio" width={100} height={100} className="rounded-full" data-ai-hint="logo" />
+        <Image src={logoUrl} alt="Logo del Comercio" width={100} height={100} className="rounded-full" data-ai-hint="logo" />
         <h1 className="text-3xl font-bold tracking-tight text-center">Únete al programa de lealtad de<br/>{tenantName}</h1>
       </div>
       <CustomerRegistrationForm programId={params.programId} tenantId={tenantId} />
