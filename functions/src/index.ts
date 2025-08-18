@@ -18,7 +18,7 @@ setGlobalOptions({region: "us-central1"});
 
 // This would come from your Google Cloud Service Account credentials in a real backend
 // You can find this in the Google Wallet API console after creating an issuer account.
-const ISSUER_ID = "3388000000022986929"; // <<<--- REPLACE WITH YOUR ISSUER ID
+const ISSUER_ID = "3388000000022986929"; // <<<--- YOUR ISSUER ID
 
 
 export const createWalletClass = onRequest(
@@ -34,6 +34,7 @@ export const createWalletClass = onRequest(
 
     // 2. Validate Input
     const {
+      programId, // Using programId to create a unique, predictable class ID
       programName,
       issuerName,
       logoText,
@@ -41,21 +42,42 @@ export const createWalletClass = onRequest(
       foregroundColor,
     } = request.body;
 
-    if (!programName || !issuerName) {
+    if (!programId || !programName || !issuerName) {
       logger.error("Missing required fields for class creation");
-      response.status(400).send("Missing programName or issuerName.");
+      response.status(400).send("Missing programId, programName, or issuerName.");
       return;
     }
 
-    const classId = uuidv4();
-    const fullClassId = `${ISSUER_ID}.${classId}`;
+    const classId = `${ISSUER_ID}.${programId}`;
 
+    // 3. Check if the class already exists
+    try {
+      const classGetResponse = await authClient.request({
+        url: `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyClass/${classId}`,
+        method: "GET",
+      });
+      logger.info(`Loyalty Class ${classId} already exists.`);
+      // If it exists, return the ID
+      response.json({walletClassId: programId});
+      return;
+    } catch (err: any) {
+      if (err.response && err.response.status !== 404) {
+        // If error is not 404 (Not Found), then something else went wrong.
+        logger.error("Error checking for wallet class:", err.response?.data || err.message);
+        response.status(500).send(`Error checking wallet class: ${err.response?.data?.error?.message || err.message}`);
+        return;
+      }
+      // If error IS 404, that's good. It means we can create it.
+      logger.info(`Loyalty Class ${classId} does not exist. Creating it now.`);
+    }
+
+    // 4. If it does not exist, create it
     const loyaltyClass = {
-      id: fullClassId,
+      id: classId,
       issuerName: issuerName,
       programName: programName,
       reviewStatus: "under_review",
-      hexBackgroundColor: backgroundColor || "#2962FF", // Default color
+      hexBackgroundColor: backgroundColor || "#2962FF",
       hexFontColor: foregroundColor || "#FFFFFF",
       cardTitle: {
         defaultValue: {
@@ -87,12 +109,10 @@ export const createWalletClass = onRequest(
           body: "...",
         },
       ],
-      // Add other required fields for a class
-      // See: https://developers.google.com/wallet/reference/rest/v1/loyaltyclass
     };
 
     try {
-      // 4. Make the API call to Google Wallet
+      // 5. Make the API call to Google Wallet to insert the new class
       const apiResponse = await authClient.request({
         url: "https://walletobjects.googleapis.com/walletobjects/v1/loyaltyClass",
         method: "POST",
@@ -101,8 +121,8 @@ export const createWalletClass = onRequest(
 
       logger.info("Successfully created Loyalty Class:", apiResponse.data);
 
-      // 5. Send the new class ID back to the client
-      response.json({walletClassId: classId});
+      // 6. Send the new class ID (the part after the issuer ID) back to the client
+      response.json({walletClassId: programId});
     } catch (error: any) {
       logger.error("Error creating wallet class:", error.response?.data || error.message);
       response.status(500).send(`Error creating wallet class: ${error.response?.data?.error?.message || error.message}`);
@@ -119,10 +139,6 @@ export const generateWalletPass = onRequest(
     });
 
     // 1. Authenticate with Google
-    // To get credentials for this function, you must:
-    //   a. Create a Service Account in your Google Cloud Project (IAM & Admin -> Service Accounts).
-    //   b. Go to the Google Pay & Wallet Console (https://pay.google.com/business/console).
-    //   c. Go to the "Users" section and invite your new Service Account's email address. This grants the service account permission.
     const auth = new GoogleAuth({
       scopes: ["https://www.googleapis.com/auth/wallet_object.issuer"],
     });
@@ -144,8 +160,7 @@ export const generateWalletPass = onRequest(
       return;
     }
 
-    // 3. Get Loyalty Class ID and program details from the program document in Firestore
-    let loyaltyClassId;
+    // 3. Get Loyalty Class ID from the program document in Firestore
     let programData;
     try {
         const programRef = admin.firestore().doc(`tenants/${tenantId}/programs/${programId}`);
@@ -154,10 +169,6 @@ export const generateWalletPass = onRequest(
             throw new Error(`Program ${programId} not found for tenant ${tenantId}.`);
         }
         programData = programSnap.data();
-        if (!programData?.design?.walletClassId) {
-            throw new Error(`walletClassId not found in program ${programId}.`);
-        }
-        loyaltyClassId = programData.design.walletClassId;
     } catch (error) {
         logger.error("Error fetching program details:", error);
         response.status(500).send("Error fetching program configuration.");
@@ -167,10 +178,11 @@ export const generateWalletPass = onRequest(
 
     // 4. Create the Loyalty Object Payload
     const loyaltyObjectId = `${ISSUER_ID}.${uuidv4()}`;
+    const loyaltyClassId = `${ISSUER_ID}.${programId}`; // The class ID is now predictable
 
     const loyaltyObject = {
       id: loyaltyObjectId,
-      classId: `${ISSUER_ID}.${loyaltyClassId}`, // Class ID is now dynamic
+      classId: loyaltyClassId,
       state: "active",
       heroImage: {
         sourceUri: {

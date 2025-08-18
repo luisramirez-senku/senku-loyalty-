@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { db } from "@/lib/firebase/client";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -55,10 +55,10 @@ const formSchema = z.object({
   programDescription: z.string().optional(),
   
   // Program Rules
-  pointsPerAmount: z.coerce.number().optional(),
-  amountForPoints: z.coerce.number().optional(),
-  stampsCount: z.coerce.number().optional(),
-  cashbackPercentage: z.coerce.number().optional(),
+  pointsPerAmount: z.coerce.number().optional().nullable(),
+  amountForPoints: z.coerce.number().optional().nullable(),
+  stampsCount: z.coerce.number().optional().nullable(),
+  cashbackPercentage: z.coerce.number().optional().nullable(),
 
   // Wallet Pass Fields
   logoText: z.string().optional(),
@@ -88,10 +88,10 @@ export default function CreateProgramForm() {
             programName: "",
             issuerName: "",
             programDescription: "",
-            pointsPerAmount: undefined,
-            amountForPoints: undefined,
-            stampsCount: undefined,
-            cashbackPercentage: undefined,
+            pointsPerAmount: null,
+            amountForPoints: null,
+            stampsCount: null,
+            cashbackPercentage: null,
             logoText: "",
             foregroundColor: "#ffffff",
             backgroundColor: "#000000",
@@ -108,12 +108,18 @@ export default function CreateProgramForm() {
         setLoading(true);
 
         try {
+            // First, create the program document in Firestore to get an ID
+            const programsCollection = collection(db, "tenants", user.uid, "programs");
+            const newProgramRef = doc(programsCollection); // Create a new doc reference with a generated ID
+            const newProgramId = newProgramRef.id;
+
             // 1. Call the Cloud Function to create the Wallet Class
             toast({ title: "Creando plantilla de Wallet...", description: "Por favor espere." });
             const classResponse = await fetch(CREATE_WALLET_CLASS_FUNCTION_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    programId: newProgramId, // Pass the new program ID to the function
                     programName: values.programName,
                     issuerName: values.issuerName,
                     logoText: values.logoText,
@@ -126,17 +132,10 @@ export default function CreateProgramForm() {
                 const errorData = await classResponse.text();
                 throw new Error(`Error al crear la clase de Wallet: ${errorData}`);
             }
+            
+            toast({ title: "Plantilla creada", description: "Guardando el programa en la base de datos." });
 
-            const { walletClassId } = await classResponse.json();
-
-            if (!walletClassId) {
-                 throw new Error("No se recibió el walletClassId desde la función.");
-            }
-             toast({ title: "Plantilla creada", description: "Guardando el programa en la base de datos." });
-
-            // 2. Save the program to Firestore with the new walletClassId
-            const programsCollection = collection(db, "tenants", user.uid, "programs");
-
+            // 2. Save the program to Firestore with the new ID
             const programData = {
                 name: values.programName,
                 type: values.programType,
@@ -151,7 +150,6 @@ export default function CreateProgramForm() {
                     cashbackPercentage: values.cashbackPercentage || null,
                 },
                 design: {
-                    walletClassId: walletClassId, // Use the ID from the function
                     logoText: values.issuerName,
                     backgroundColor: values.backgroundColor,
                     foregroundColor: values.foregroundColor,
@@ -159,7 +157,7 @@ export default function CreateProgramForm() {
                 }
             };
     
-            await addDoc(programsCollection, programData);
+            await setDoc(newProgramRef, programData);
     
             toast({
                 title: "Programa Creado Exitosamente",
@@ -312,7 +310,7 @@ export default function CreateProgramForm() {
                                             <FormControl>
                                                 <div className="relative">
                                                     <Star className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                    <Input type="number" placeholder="10" className="pl-8" {...field} />
+                                                    <Input type="number" placeholder="10" className="pl-8" {...field} value={field.value ?? ''} />
                                                 </div>
                                             </FormControl>
                                             <FormMessage />
@@ -328,7 +326,7 @@ export default function CreateProgramForm() {
                                             <FormControl>
                                                 <div className="relative">
                                                      <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                    <Input type="number" placeholder="1" className="pl-8" {...field} />
+                                                    <Input type="number" placeholder="1" className="pl-8" {...field} value={field.value ?? ''} />
                                                 </div>
                                             </FormControl>
                                             <FormDescription>...de compra.</FormDescription>
@@ -347,7 +345,7 @@ export default function CreateProgramForm() {
                                         <FormItem>
                                         <FormLabel>Número de Sellos</FormLabel>
                                         <FormControl>
-                                            <Input type="number" placeholder="10" {...field} />
+                                            <Input type="number" placeholder="10" {...field} value={field.value ?? ''}/>
                                         </FormControl>
                                         <FormDescription>Sellos necesarios para completar la tarjeta.</FormDescription>
                                         <FormMessage />
@@ -366,7 +364,7 @@ export default function CreateProgramForm() {
                                         <FormControl>
                                             <div className="relative">
                                                 <Percent className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                <Input type="number" placeholder="5" className="pl-8" {...field} />
+                                                <Input type="number" placeholder="5" className="pl-8" {...field} value={field.value ?? ''} />
                                             </div>
                                         </FormControl>
                                         <FormMessage />
