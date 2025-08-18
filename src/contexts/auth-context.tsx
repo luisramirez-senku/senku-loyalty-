@@ -13,7 +13,7 @@ import {
 } from 'firebase/auth';
 import { db, auth } from '@/lib/firebase/client';
 import { Loader } from 'lucide-react';
-import { writeBatch, doc } from 'firebase/firestore';
+import { writeBatch, doc, collection } from 'firebase/firestore';
 
 export interface AuthContextType {
   user: User | null;
@@ -83,9 +83,8 @@ const createNewTenant = async (tenantId: string, businessName: string, adminEmai
     });
 
     // 4. Create a sample customer for demonstration
-    const customerRef = doc(collection(db, "tenants", tenantId, "customers"));
     const demoCustomerName = "Cliente Demo";
-    batch.set(customerRef, {
+    batch.set(doc(collection(db, "tenants", tenantId, "customers")), {
         name: demoCustomerName,
         email: "cliente.demo@email.com",
         phone: "555-0101",
@@ -101,6 +100,31 @@ const createNewTenant = async (tenantId: string, businessName: string, adminEmai
         ],
     });
 
+    // ** Special data population for luisdiego@gosenku.com **
+    if (adminEmail === 'luisdiego@gosenku.com') {
+        const customersCollectionRef = collection(db, "tenants", tenantId, "customers");
+        const rewardsCollectionRef = collection(db, "tenants", tenantId, "rewards");
+        const usersCollectionRef = collection(db, "tenants", tenantId, "users");
+        const branchesCollectionRef = collection(db, "tenants", tenantId, "branches");
+
+        // Add more customers
+        batch.set(doc(customersCollectionRef), { name: "Ana Torres", email: "ana.t@example.com", tier: "Oro", points: 15200, segment: "VIP", joined: "2023-01-15", initials: "AT", history: [] });
+        batch.set(doc(customersCollectionRef), { name: "Carlos Vega", email: "carlos.v@example.com", tier: "Plata", points: 6500, segment: "Comprador frecuente", joined: "2023-05-20", initials: "CV", history: [] });
+        batch.set(doc(customersCollectionRef), { name: "Sofía Rojas", email: "sofia.r@example.com", tier: "Bronce", points: 850, segment: "En riesgo", joined: "2024-02-10", initials: "SR", history: [] });
+
+        // Add rewards
+        batch.set(doc(rewardsCollectionRef), { name: "Café Gratis", description: "Cualquier café mediano.", cost: 1500 });
+        batch.set(doc(rewardsCollectionRef), { name: "20% Descuento", description: "20% de descuento en tu próxima compra.", cost: 5000 });
+        batch.set(doc(rewardsCollectionRef), { name: "Postre Gratis", description: "Elige tu postre favorito.", cost: 2500 });
+        
+        // Add users
+        batch.set(doc(usersCollectionRef), { name: "Cajero de Ejemplo", email: "cajero@example.com", role: "Cajero", status: "Activo", lastLogin: "2024-05-20", initials: "CE" });
+        batch.set(doc(usersCollectionRef), { name: "Gerente de Ejemplo", email: "gerente@example.com", role: "Gerente", status: "Activo", lastLogin: "2024-05-21", initials: "GE" });
+
+        // Add branches
+        batch.set(doc(branchesCollectionRef), { name: "Sucursal Principal", address: "Avenida Central 123, San José", location: { lat: 9.9333, lng: -84.0833 } });
+        batch.set(doc(branchesCollectionRef), { name: "Sucursal Este", address: "Mall del Este, Local 5", location: { lat: 9.9325, lng: -84.0507 } });
+    }
 
     await batch.commit();
 }
