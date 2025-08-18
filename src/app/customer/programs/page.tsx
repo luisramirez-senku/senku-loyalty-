@@ -1,19 +1,15 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase/client";
 import { collection, query, where, getDocs, collectionGroup, doc, getDoc } from "firebase/firestore";
 import type { Customer } from "@/components/app/admin/customer-management";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader, Star } from "lucide-react";
-import Logo from "@/components/app/shared/logo";
+import { Card, CardContent } from "@/components/ui/card";
+import { Star } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-
 
 interface CustomerProgram extends Customer {
     tenantId: string;
@@ -21,12 +17,13 @@ interface CustomerProgram extends Customer {
     logoUrl: string;
 }
 
-export default function CustomerProgramsPage() {
+function ProgramsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const email = searchParams.get("email");
   const [programs, setPrograms] = useState<CustomerProgram[]>([]);
   const [loading, setLoading] = useState(true);
+  const [customerName, setCustomerName] = useState("");
 
   useEffect(() => {
     const fetchPrograms = async () => {
@@ -38,6 +35,15 @@ export default function CustomerProgramsPage() {
         const customersRef = collectionGroup(db, 'customers');
         const q = query(customersRef, where('email', '==', email));
         const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+            // Handle case where no customer is found, maybe redirect or show message
+            router.push('/login');
+            return;
+        }
+
+        // Set customer name from the first result
+        setCustomerName(querySnapshot.docs[0].data().name);
         
         const customerProgramsData: CustomerProgram[] = [];
         for (const customerDoc of querySnapshot.docs) {
@@ -67,35 +73,37 @@ export default function CustomerProgramsPage() {
     };
 
     fetchPrograms();
-  }, [email]);
+  }, [email, router]);
+
+  if (loading) {
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
+            <Skeleton className="h-10 w-3/4 mb-4" />
+            <Skeleton className="h-5 w-1/2 mb-8" />
+            <div className="w-full max-w-3xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <Card key={i} className="p-4">
+                        <div className="flex items-center gap-4">
+                            <Skeleton className="h-16 w-16 rounded-md" />
+                            <div className="space-y-2 flex-1">
+                                <Skeleton className="h-5 w-3/4" />
+                                <Skeleton className="h-4 w-1/2" />
+                            </div>
+                        </div>
+                    </Card>
+                ))}
+            </div>
+        </div>
+    )
+  }
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-background p-4">
-        <Link href="/" className="flex items-center gap-4 mb-8">
-            <Logo className="h-10 w-10 text-primary" />
-            <h1 className="text-3xl font-bold tracking-tight">Senku Lealtad</h1>
-        </Link>
-      <Card className="w-full max-w-lg">
-        <CardHeader>
-          <CardTitle>Tus Programas de Lealtad</CardTitle>
-          <CardDescription>
-            Encontramos estas cuentas asociadas a tu correo electrónico. Selecciona una para ver los detalles.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {loading && (
-             Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-4 p-4 border rounded-lg">
-                    <Skeleton className="h-16 w-16 rounded-md" />
-                    <div className="space-y-2 flex-1">
-                        <Skeleton className="h-5 w-3/4" />
-                        <Skeleton className="h-4 w-1/4" />
-                    </div>
-                    <Skeleton className="h-8 w-8" />
-                </div>
-            ))
-          )}
-          {!loading && programs.map((program) => (
+    <div className="flex flex-col items-center min-h-screen bg-background p-4 md:p-8">
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight uppercase mb-2 text-center">Hola {customerName}</h1>
+        <p className="text-muted-foreground mb-8">Estás registrado en los siguientes programas</p>
+
+      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {programs.map((program) => (
             <Card 
                 key={program.id} 
                 className="hover:bg-accent hover:border-primary cursor-pointer transition-colors"
@@ -110,17 +118,25 @@ export default function CustomerProgramsPage() {
                             <span>{program.points.toLocaleString()} puntos</span>
                         </div>
                     </div>
-                    <p className="text-sm font-medium">{program.tier}</p>
                 </CardContent>
             </Card>
           ))}
            {!loading && programs.length === 0 && (
-                <div className="text-center text-muted-foreground py-10">
+                <div className="col-span-full text-center text-muted-foreground py-10">
                     <p>No se encontraron programas para el correo: {email}</p>
+                    <Button variant="link" onClick={() => router.push('/login')}>Volver</Button>
                 </div>
             )}
-        </CardContent>
-      </Card>
+       </div>
     </div>
   );
+}
+
+
+export default function CustomerProgramsPage() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <ProgramsContent />
+        </Suspense>
+    )
 }

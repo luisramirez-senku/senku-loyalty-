@@ -1,6 +1,4 @@
 
-import AppHeader from "@/components/app/shared/header";
-
 export default function CustomerLayout({
   children,
 }: {

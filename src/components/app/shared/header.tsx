@@ -23,7 +23,7 @@ export default function AppHeader() {
 
   const handleLogout = async () => {
     await logout();
-    router.push('/login');
+    router.push('/admin/login');
   }
 
   const getInitials = (email: string | null | undefined) => {
@@ -71,7 +71,7 @@ export default function AppHeader() {
                  </DropdownMenu>
             ) : (
                 <Button asChild>
-                    <Link href="/login">Iniciar Sesión</Link>
+                    <Link href="/admin/login">Iniciar Sesión</Link>
                 </Button>
             )}
         </div>
