@@ -2,7 +2,6 @@
 "use client";
 
 import Image from "next/image";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -17,11 +16,7 @@ import { db } from "@/lib/firebase/client";
 import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 import type { Customer } from "@/components/app/admin/customer-management";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useToast } from "@/hooks/use-toast";
 import type { Program } from "@/components/app/admin/program-management";
-
-// In a real production app, this should be an environment variable
-const WALLET_FUNCTION_URL = "https://us-central1-senku-loyalty.cloudfunctions.net/generateWalletPass";
 
 interface LoyaltyCardProps {
     customerId: string;
@@ -29,11 +24,8 @@ interface LoyaltyCardProps {
 
 export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
   const [customer, setCustomer] = useState<Customer | null>(null);
-  const [tenantId, setTenantId] = useState<string | null>(null);
   const [program, setProgram] = useState<Program | null>(null);
   const [loading, setLoading] = useState(true);
-  const [passLoading, setPassLoading] = useState(false);
-  const { toast } = useToast();
 
   useEffect(() => {
     const fetchCustomerData = async () => {
@@ -73,7 +65,6 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
         
         if (foundCustomer && foundTenantId) {
           setCustomer(foundCustomer);
-          setTenantId(foundTenantId);
           setProgram(foundProgram);
         } else {
           console.log("No such customer!");
@@ -86,61 +77,6 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
     };
     fetchCustomerData();
   }, [customerId]);
-
-  const handleAddToWallet = async (walletType: 'google' | 'apple') => {
-    if (!customer || !program || !tenantId) return;
-    setPassLoading(true);
-
-    if (walletType === 'apple') {
-        toast({ title: "Próximamente", description: "La integración con Apple Wallet estará disponible pronto."});
-        setPassLoading(false);
-        return;
-    }
-
-    try {
-        const programDesign = (program as any).design || {};
-        const response = await fetch(WALLET_FUNCTION_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                tenantId: tenantId,
-                programId: program.id,
-                customerId: customer.id,
-                customerName: customer.name,
-                customerPoints: customer.points,
-                customerTier: customer.tier,
-                programName: program.name,
-                logoText: programDesign.logoText || "Senku Lealtad",
-                backgroundColor: programDesign.backgroundColor || "#2962FF",
-                foregroundColor: programDesign.foregroundColor || "#FFFFFF",
-            }),
-        });
-        
-        if (!response.ok) {
-            throw new Error(`Error del servidor: ${response.statusText}`);
-        }
-
-        const result = await response.json();
-
-        if (result.saveUrl) {
-            window.open(result.saveUrl, '_blank');
-        } else {
-             throw new Error("La respuesta del servidor no contenía una URL de guardado.");
-        }
-
-    } catch (error) {
-        console.error('Error generating wallet pass:', error);
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "No se pudo generar el pase de Wallet. Inténtalo de nuevo."
-        });
-    } finally {
-        setPassLoading(false);
-    }
-  }
 
 
   if (loading) {
@@ -174,10 +110,17 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
   }
 
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=128x128&data=${customer.id}`;
+  const programDesign = (program as any)?.design || {};
 
   return (
     <Card className="overflow-hidden">
-      <div className="bg-primary text-primary-foreground p-6 relative">
+      <div 
+        className="text-primary-foreground p-6 relative"
+        style={{ 
+            backgroundColor: programDesign.backgroundColor || '#1c1c1c',
+            color: programDesign.foregroundColor || '#ffffff'
+        }}
+      >
         <div className="absolute inset-0 bg-grid-slate-100/10 [mask-image:linear-gradient(to_bottom,white,transparent)]"></div>
         <div className="relative z-10 flex justify-between items-start">
             <div>
@@ -201,16 +144,6 @@ export default function LoyaltyCard({ customerId }: LoyaltyCardProps) {
             </div>
         </div>
       </div>
-      <CardFooter className="bg-background/80 backdrop-blur-sm p-4 flex flex-col sm:flex-row gap-2">
-        <Button className="w-full" onClick={() => handleAddToWallet('apple')} disabled={passLoading}>
-            {passLoading ? <Loader className="mr-2 h-4 w-4 animate-spin"/> : <Image src="/apple-wallet.svg" alt="Apple Wallet" width={24} height={24} className="mr-2" />}
-            Añadir a Apple Wallet
-        </Button>
-        <Button className="w-full" variant="outline" onClick={() => handleAddToWallet('google')} disabled={passLoading}>
-            {passLoading ? <Loader className="mr-2 h-4 w-4 animate-spin"/> : <Image src="/google-wallet.svg" alt="Google Wallet" width={24} height={24} className="mr-2" />}
-            Añadir a Google Wallet
-        </Button>
-      </CardFooter>
     </Card>
   );
 }

@@ -7,7 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { db } from "@/lib/firebase/client";
-import { collection, addDoc, doc, setDoc } from "firebase/firestore";
+import { collection, addDoc } from "firebase/firestore";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -29,13 +29,6 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-  } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
 import { ArrowLeft, DollarSign, Loader, Percent, Stamp, Star } from "lucide-react";
@@ -43,8 +36,6 @@ import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/use-auth";
 
-// In a real production app, this should be an environment variable
-const CREATE_WALLET_CLASS_FUNCTION_URL = "https://us-central1-senku-loyalty.cloudfunctions.net/createWalletClass";
 
 const formSchema = z.object({
   programType: z.enum(["Puntos", "Sellos", "Cashback"], {
@@ -59,13 +50,6 @@ const formSchema = z.object({
   amountForPoints: z.coerce.number().optional().nullable(),
   stampsCount: z.coerce.number().optional().nullable(),
   cashbackPercentage: z.coerce.number().optional().nullable(),
-
-  // Wallet Pass Fields
-  logoText: z.string().optional(),
-  foregroundColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
-  backgroundColor: z.string().regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Debe ser un código de color hexadecimal válido.").optional(),
-  
-  barcodeType: z.string().min(1, "El tipo de código de barras es requerido."),
 });
 
 type ProgramType = "Puntos" | "Sellos" | "Cashback";
@@ -87,10 +71,6 @@ export default function CreateProgramForm() {
             amountForPoints: null,
             stampsCount: null,
             cashbackPercentage: null,
-            logoText: "",
-            foregroundColor: "#FFFFFF",
-            backgroundColor: "#2962FF",
-            barcodeType: "PKBarcodeFormatQR",
         },
       });
     
@@ -102,38 +82,12 @@ export default function CreateProgramForm() {
         setLoading(true);
 
         try {
-            // First, create the program document in Firestore to get an ID
             const programsCollection = collection(db, "tenants", user.uid, "programs");
-            const newProgramRef = doc(programsCollection); // Create a new doc reference with a generated ID
-            const newProgramId = newProgramRef.id;
-
-            // 1. Call the Cloud Function to create the Wallet Class
-            toast({ title: "Paso 1: Creando plantilla de Wallet...", description: "Por favor espere." });
-            const classResponse = await fetch(CREATE_WALLET_CLASS_FUNCTION_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    programId: newProgramId, // Pass the new program ID to the function
-                    programName: values.programName,
-                    issuerName: values.issuerName,
-                    logoText: values.logoText,
-                    backgroundColor: values.backgroundColor,
-                    foregroundColor: values.foregroundColor,
-                }),
-            });
-
-            if (!classResponse.ok) {
-                const errorData = await classResponse.text();
-                throw new Error(`Error al crear la clase de Wallet: ${errorData}`);
-            }
             
-            toast({ title: "Paso 2: Plantilla creada", description: "Guardando el programa en la base de datos." });
-
-            // 2. Save the program to Firestore with the new ID
             const programData = {
                 name: values.programName,
                 type: values.programType,
-                status: "Borrador",
+                status: "Activo",
                 members: 0,
                 created: new Date().toISOString().split('T')[0],
                 description: values.programDescription || "",
@@ -145,16 +99,16 @@ export default function CreateProgramForm() {
                 },
                 design: {
                     logoText: values.issuerName,
-                    backgroundColor: values.backgroundColor,
-                    foregroundColor: values.foregroundColor,
+                    backgroundColor: "#2962FF", // Default color
+                    foregroundColor: "#FFFFFF", // Default color
                 }
             };
     
-            await setDoc(newProgramRef, programData);
+            await addDoc(programsCollection, programData);
     
             toast({
                 title: "Programa Creado Exitosamente",
-                description: "El nuevo programa de lealtad ha sido creado como borrador.",
+                description: "El nuevo programa de lealtad ha sido creado y está activo.",
             });
             router.push("/admin/programs");
         } catch (error) {
@@ -162,8 +116,7 @@ export default function CreateProgramForm() {
             toast({
                 variant: "destructive",
                 title: "Error al crear el programa",
-                description: `${error instanceof Error ? error.message : 'No se pudo crear el programa. Revise los logs de la función para más detalles.'}`,
-                duration: 9000,
+                description: `${error instanceof Error ? error.message : 'Ocurrió un error inesperado.'}`,
             });
         } finally {
             setLoading(false);
@@ -172,19 +125,26 @@ export default function CreateProgramForm() {
 
     const programType = form.watch("programType");
 
-    const nextStep = () => setStep((s) => s + 1);
+    const nextStep = async () => {
+        const isValid = await form.trigger(["programType"]);
+        if (isValid) {
+            setStep((s) => s + 1);
+        }
+    };
     const prevStep = () => setStep((s) => s - 1);
 
   return (
     <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={prevStep} disabled={step === 1}>
-                <ArrowLeft className="h-4 w-4" />
-            </Button>
+            {step > 1 && (
+                <Button variant="outline" size="icon" onClick={prevStep}>
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+            )}
             <div>
                 <h2 className="text-3xl font-bold tracking-tight">Crear Nuevo Programa de Lealtad</h2>
                 <p className="text-muted-foreground">
-                    Paso {step} de 3: {step === 1 ? 'Modalidad de recompensa' : step === 2 ? 'Información del programa' : 'Diseño del pase'}
+                    Paso {step} de 2: {step === 1 ? 'Modalidad de recompensa' : 'Información del programa'}
                 </p>
             </div>
         </div>
@@ -240,7 +200,7 @@ export default function CreateProgramForm() {
                                 />
                         </CardContent>
                         <CardFooter className="flex justify-end">
-                            <Button onClick={nextStep} disabled={!programType}>Siguiente</Button>
+                            <Button type="button" onClick={nextStep} disabled={!programType}>Siguiente</Button>
                         </CardFooter>
                     </Card>
                 )}
@@ -370,84 +330,7 @@ export default function CreateProgramForm() {
 
                         </CardContent>
                         <CardFooter className="flex justify-between">
-                            <Button variant="outline" onClick={prevStep}>Anterior</Button>
-                            <Button onClick={nextStep}>Siguiente</Button>
-                        </CardFooter>
-                    </Card>
-                )}
-
-                {step === 3 && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Diseño del Pase de Wallet</CardTitle>
-                            <CardDescription>Personalice la apariencia de la tarjeta de lealtad digital en Apple Wallet y Google Wallet.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="grid gap-6 md:grid-cols-2">
-                            <FormField
-                                control={form.control}
-                                name="logoText"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Texto del Logo</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="Texto junto a su logo" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="barcodeType"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Formato del Código de Barras</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Seleccione un formato" />
-                                        </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="PKBarcodeFormatQR">Código QR</SelectItem>
-                                            <SelectItem value="PKBarcodeFormatPDF417">PDF417</SelectItem>
-                                            <SelectItem value="PKBarcodeFormatAztec">Aztec</SelectItem>
-                                            <SelectItem value="PKBarcodeFormatCode128">Code 128</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name="backgroundColor"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Color de Fondo</FormLabel>
-                                    <FormControl>
-                                        <Input type="color" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                            <FormField
-                                control={form.control}
-                                name="foregroundColor"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Color de Texto Principal</FormLabel>
-                                    <FormControl>
-                                        <Input type="color" {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </CardContent>
-                        <CardFooter className="flex justify-between">
-                            <Button variant="outline" onClick={prevStep}>Anterior</Button>
+                            <Button type="button" variant="outline" onClick={prevStep}>Anterior</Button>
                             <Button type="submit" disabled={loading}>
                                 {loading && <Loader className="mr-2 h-4 w-4 animate-spin" />}
                                 Crear Programa
@@ -460,7 +343,5 @@ export default function CreateProgramForm() {
     </div>
   );
 }
-
-    
 
     

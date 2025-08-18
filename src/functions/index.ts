@@ -1,4 +1,5 @@
 
+
 /**
  * See a full list of supported triggers at https://firebase.google.com/docs/functions
  */
@@ -6,271 +7,13 @@
 import {setGlobalOptions} from "firebase-functions";
 import {onRequest} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
-import {v4 as uuidv4} from "uuid";
 import * as admin from "firebase-admin";
-import {GoogleAuth} from "google-auth-library";
 
 admin.initializeApp();
 const db = admin.firestore();
 
 // Set global options for functions (e.g., region, memory)
 setGlobalOptions({region: "us-central1"});
-
-// This would come from your Google Cloud Service Account credentials in a real backend
-// You can find this in the Google Wallet API console after creating an issuer account.
-const ISSUER_ID = "3388000000022986929"; // <<<--- YOUR ISSUER ID
-
-
-export const createWalletClass = onRequest(
-  {cors: true},
-  async (request, response) => {
-    logger.info("createWalletClass function triggered", {body: request.body});
-
-    // 1. Authenticate with Google
-    const auth = new GoogleAuth({
-      scopes: ["https://www.googleapis.com/auth/wallet_object.issuer"],
-    });
-    const authClient = await auth.getClient();
-
-    // 2. Validate Input
-    const {
-      programId, // Using programId to create a unique, predictable class ID
-      programName,
-      issuerName,
-      logoText,
-      backgroundColor,
-      foregroundColor,
-    } = request.body;
-
-    if (!programId || !programName || !issuerName) {
-      logger.error("Missing required fields for class creation");
-      response.status(400).send("Missing programId, programName, or issuerName.");
-      return;
-    }
-
-    const classId = `${ISSUER_ID}.${programId}`;
-
-    // 3. Check if the class already exists
-    try {
-      await authClient.request({
-        url: `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyClass/${classId}`,
-        method: "GET",
-      });
-      logger.info(`Loyalty Class ${classId} already exists.`);
-      response.json({walletClassId: programId});
-      return;
-    } catch (err: any) {
-      if (err.response && err.response.status !== 404) {
-        logger.error("Error checking for wallet class:", err.response?.data || err.message);
-        response.status(500).send(`Error checking wallet class: ${err.response?.data?.error?.message || err.message}`);
-        return;
-      }
-      logger.info(`Loyalty Class ${classId} does not exist. Creating it now.`);
-    }
-
-    // 4. If it does not exist, create it
-    const loyaltyClass = {
-      id: classId,
-      issuerName: issuerName,
-      programName: programName,
-      reviewStatus: "under_review",
-      hexBackgroundColor: backgroundColor || "#2962FF",
-      hexFontColor: foregroundColor || "#FFFFFF",
-      cardTitle: {
-        defaultValue: {
-          language: "es-US",
-          value: logoText || issuerName,
-        },
-      },
-      header: {
-        defaultValue: {
-          language: "es-US",
-          value: programName,
-        },
-      },
-      loyaltyPoints: {
-        label: "Puntos",
-        balance: {
-          string: "0",
-        },
-      },
-      textModulesData: [
-        {
-          id: "points",
-          header: "PUNTOS",
-          body: "...",
-        },
-        {
-          id: "tier",
-          header: "NIVEL",
-          body: "...",
-        },
-      ],
-    };
-
-    try {
-      // 5. Make the API call to Google Wallet to insert the new class
-      const apiResponse = await authClient.request({
-        url: "https://walletobjects.googleapis.com/walletobjects/v1/loyaltyClass",
-        method: "POST",
-        data: loyaltyClass,
-      });
-
-      logger.info("Successfully created Loyalty Class:", apiResponse.data);
-      response.json({walletClassId: programId});
-    } catch (error: any) {
-      logger.error("Error creating wallet class:", error.response?.data?.error || error.message);
-      const errorMessage = error.response?.data?.error?.message || "Unknown error creating wallet class.";
-      response.status(500).send(`Error creating wallet class: ${errorMessage}`);
-    }
-  }
-);
-
-
-export const generateWalletPass = onRequest(
-  {cors: true}, // Enable CORS for client-side requests
-  async (request, response) => {
-    logger.info("generateWalletPass function triggered", {
-      body: request.body,
-    });
-
-    // 1. Authenticate with Google
-    const auth = new GoogleAuth({
-      scopes: ["https://www.googleapis.com/auth/wallet_object.issuer"],
-    });
-    const authClient = await auth.getClient();
-
-    // 2. Validate Input
-    const {
-      tenantId,
-      programId,
-      customerId,
-      customerName,
-      customerPoints,
-      customerTier,
-    } = request.body;
-
-    if (!tenantId || !programId || !customerId || !customerName || customerPoints === undefined) {
-      logger.error("Missing required fields in request body");
-      response.status(400).send("Missing required fields.");
-      return;
-    }
-
-    // 3. Get Loyalty Class ID from the program document in Firestore
-    let programData;
-    try {
-        const programRef = admin.firestore().doc(`tenants/${tenantId}/programs/${programId}`);
-        const programSnap = await programRef.get();
-        if (!programSnap.exists) {
-            throw new Error(`Program ${programId} not found for tenant ${tenantId}.`);
-        }
-        programData = programSnap.data();
-    } catch (error) {
-        logger.error("Error fetching program details:", error);
-        response.status(500).send("Error fetching program configuration.");
-        return;
-    }
-
-
-    // 4. Create the Loyalty Object Payload
-    const loyaltyObjectId = `${ISSUER_ID}.${uuidv4()}`;
-    const loyaltyClassId = `${ISSUER_ID}.${programId}`; // The class ID is now predictable
-
-    const loyaltyObject = {
-      id: loyaltyObjectId,
-      classId: loyaltyClassId,
-      state: "active",
-      heroImage: {
-        sourceUri: {
-          uri: "https://placehold.co/1032x336.png",
-          description: "Banner",
-        },
-        contentDescription: {
-          defaultValue: {
-            language: "es-US",
-            value: "Banner del programa de lealtad",
-          },
-        },
-      },
-      textModulesData: [
-        {
-          id: "points",
-          header: "PUNTOS",
-          body: customerPoints.toString(),
-        },
-        {
-          id: "tier",
-          header: "NIVEL",
-          body: customerTier,
-        },
-      ],
-      linksModuleData: {
-        uris: [
-          {
-            uri: "https://www.example.com", // <<<--- REPLACE WITH YOUR WEBSITE
-            description: "Sitio web del programa",
-            id: "program_website",
-          },
-        ],
-      },
-      imageModulesData: [],
-      barcode: {
-        type: "QR_CODE",
-        value: customerId,
-        alternateText: customerName,
-      },
-      accountId: customerId,
-      accountName: customerName,
-      loyaltyPoints: {
-        balance: {
-          string: customerPoints.toString(),
-        },
-        label: "Puntos",
-      },
-      cardTitle: {
-        defaultValue: {
-          language: "es-US",
-          value: programData?.design?.logoText || programData?.name || "Tarjeta de Lealtad",
-        },
-      },
-      header: {
-        defaultValue: {
-          language: "es-US",
-          value: programData?.name,
-        },
-      },
-      hexBackgroundColor: programData?.design?.backgroundColor || "#2962FF",
-      hexFontColor: programData?.design?.foregroundColor || "#FFFFFF",
-    };
-
-    // 5. Create the JWT for the "Save to Wallet" button
-    const claims = {
-      iss: authClient.email,
-      aud: "google",
-      typ: "savetowallet",
-      origins: [
-        "http://localhost:9002", // For local development
-        "https://senku-loyalty.web.app", // <<<--- REPLACE WITH YOUR PRODUCTION DOMAIN
-      ],
-      payload: {
-        loyaltyObjects: [loyaltyObject],
-      },
-    };
-
-    try {
-      const token = await authClient.sign(claims);
-      logger.info("JWT successfully created.");
-
-      // 6. Send the signed JWT to the client
-      response.json({
-        saveUrl: `https://pay.google.com/gp/v/save/${token}`,
-      });
-    } catch (error) {
-      logger.error("Error signing JWT:", error);
-      response.status(500).send("Error generating wallet pass.");
-    }
-  }
-);
 
 
 // --- PayPal Webhook Handler ---
@@ -319,14 +62,9 @@ export const paypalWebhookHandler = onRequest(async (request, response) => {
     }),
   });
 
-  if (verificationResponse.status !== 200) {
-    logger.error("Webhook signature verification failed.");
-    response.status(403).send("Forbidden");
-    return;
-  }
   const verificationData = await verificationResponse.json();
   if (verificationData.verification_status !== "SUCCESS") {
-    logger.error("Webhook signature verification status not SUCCESS.");
+    logger.error("Webhook signature verification failed.", verificationData);
     response.status(403).send("Forbidden");
     return;
   }
