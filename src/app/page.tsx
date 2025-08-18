@@ -125,7 +125,7 @@ export default function Home() {
                     <Link href="/customer/find">Soy Cliente</Link>
                 </Button>
                  <Button variant="ghost" asChild>
-                    <Link href="/admin/login">Acceso Negocios</Link>
+                    <Link href="/login">Acceso Negocios</Link>
                 </Button>
                 <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     <Link href="/signup">Empezar Prueba Gratuita</Link>

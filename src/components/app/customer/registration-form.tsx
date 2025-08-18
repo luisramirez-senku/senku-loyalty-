@@ -29,8 +29,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Loader } from "lucide-react";
 import Image from "next/image";
-import { db } from "@/lib/firebase/client";
-import { collection, addDoc } from "firebase/firestore";
+import { createNewCustomer } from "@/lib/firebase/actions";
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -38,6 +37,9 @@ const formSchema = z.object({
   }),
   email: z.string().email({
     message: "Por favor, introduce una dirección de correo electrónico válida.",
+  }),
+  password: z.string().min(6, {
+      message: "La contraseña debe tener al menos 6 caracteres.",
   }),
   phone: z.string().optional(),
   cedula: z.string().optional(),
@@ -60,6 +62,7 @@ export default function CustomerRegistrationForm({ programId, tenantId }: Custom
     defaultValues: {
       name: "",
       email: "",
+      password: "",
       phone: "",
       cedula: "",
       terms: false,
@@ -69,38 +72,23 @@ export default function CustomerRegistrationForm({ programId, tenantId }: Custom
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     try {
-        const initials = values.name.split(' ').map(n => n[0]).join('').toUpperCase();
-        
-        // The customer is created inside the specific tenant's customer collection
-        const customersCollection = collection(db, "tenants", tenantId, "customers");
-
-        const customerData = {
-            name: values.name,
-            email: values.email,
-            phone: values.phone || '',
-            cedula: values.cedula || '',
-            programId: programId,
-            tier: 'Bronce',
-            points: 0,
-            segment: 'Nuevo miembro',
-            joined: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
-            initials: initials,
-            history: [],
-        };
-
-        await addDoc(customersCollection, customerData);
+        await createNewCustomer(tenantId, programId, values);
         
         toast({
             title: "¡Registro exitoso!",
-            description: "Bienvenido al programa de lealtad.",
+            description: "Bienvenido al programa de lealtad. Ahora puedes iniciar sesión.",
         });
         setSubmitted(true);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error al registrar el cliente:", error);
+        let errorMessage = "No se pudo completar el registro. Por favor, inténtalo de nuevo.";
+        if (error.message.includes('email-already-in-use')) {
+            errorMessage = "Este correo electrónico ya está registrado. Intenta iniciar sesión.";
+        }
         toast({
             variant: "destructive",
             title: "Error en el registro",
-            description: "No se pudo completar el registro. Por favor, inténtalo de nuevo.",
+            description: errorMessage,
         });
     } finally {
         setLoading(false);
@@ -113,25 +101,16 @@ export default function CustomerRegistrationForm({ programId, tenantId }: Custom
             <CardHeader>
                 <CardTitle className="text-center text-2xl">¡Gracias por registrarte!</CardTitle>
                 <CardDescription className="text-center">
-                Tu tarjeta digital está lista. Agrégala a tu billetera para un fácil acceso.
+                    Tu cuenta ha sido creada. Ahora puedes iniciar sesión para ver tus programas de lealtad.
                 </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-                <Button className="w-full h-12">
-                    <Image src="/apple-wallet.svg" alt="Apple Wallet" width={24} height={24} className="mr-2" />
-                    Añadir a Apple Wallet
-                </Button>
-                <Button className="w-full h-12" variant="outline">
-                    <Image src="/google-wallet.svg" alt="Google Wallet" width={24} height={24} className="mr-2" />
-                    Añadir a Google Wallet
-                </Button>
-            </CardContent>
-            <CardFooter className="text-center flex-col gap-4">
-                <p className="text-xs text-muted-foreground">También recibirás tu tarjeta por correo electrónico.</p>
-                 <Link href="/" passHref>
-                    <Button variant="link">Volver al inicio</Button>
+            <CardContent>
+                <Link href="/login" passHref>
+                    <Button className="w-full">
+                        Ir a Iniciar Sesión
+                    </Button>
                 </Link>
-            </CardFooter>
+            </CardContent>
         </Card>
     );
   }
@@ -167,13 +146,26 @@ export default function CustomerRegistrationForm({ programId, tenantId }: Custom
                 <FormItem>
                   <FormLabel>Correo electrónico</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ej: tu@correo.com" {...field} />
+                    <Input type="email" placeholder="Ej: tu@correo.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
              <FormField
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Contraseña</FormLabel>
+                  <FormControl>
+                    <Input type="password" placeholder="••••••••" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
               control={form.control}
               name="phone"
               render={({ field }) => (

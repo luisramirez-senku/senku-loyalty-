@@ -1,7 +1,7 @@
 
 'use server';
 
-import { db } from '@/lib/firebase/server';
+import { db, auth as adminAuth } from '@/lib/firebase/server';
 import { writeBatch, doc, collection } from 'firebase/firestore';
 
 // This is a server action, it will only run on the server.
@@ -62,22 +62,37 @@ export const createNewTenant = async (tenantId: string, businessName: string, ad
 
     // 4. Create a sample customer for demonstration
     const demoCustomerName = "Cliente Demo";
-    batch.set(doc(collection(db, "tenants", tenantId, "customers")), {
-        name: demoCustomerName,
-        email: "cliente.demo@email.com",
-        phone: "555-0101",
-        programId: programRef.id, // Link to the created program
-        tier: 'Bronce',
-        points: 1250,
-        segment: 'Nuevo miembro',
-        joined: new Date().toISOString().split('T')[0],
-        initials: demoCustomerName.split(' ').map(n => n[0]).join(''),
-        history: [
-            { id: 'tx_1', date: new Date().toISOString().split('T')[0], description: 'Bono de bienvenida', points: 250 },
-            { id: 'tx_2', date: new Date().toISOString().split('T')[0], description: 'Primera compra', points: 1000 },
-        ],
-    });
-
+    const demoCustomerEmail = "cliente.demo@email.com";
+    const demoCustomerPassword = "password123";
+    try {
+        const demoUserRecord = await adminAuth.createUser({
+            email: demoCustomerEmail,
+            password: demoCustomerPassword,
+            displayName: demoCustomerName,
+        });
+        batch.set(doc(db, "tenants", tenantId, "customers", demoUserRecord.uid), {
+            name: demoCustomerName,
+            email: demoCustomerEmail,
+            phone: "555-0101",
+            programId: programRef.id,
+            tier: 'Bronce',
+            points: 1250,
+            segment: 'Nuevo miembro',
+            joined: new Date().toISOString().split('T')[0],
+            initials: demoCustomerName.split(' ').map(n => n[0]).join(''),
+            history: [
+                { id: 'tx_1', date: new Date().toISOString().split('T')[0], description: 'Bono de bienvenida', points: 250 },
+                { id: 'tx_2', date: new Date().toISOString().split('T')[0], description: 'Primera compra', points: 1000 },
+            ],
+        });
+    } catch (e: any) {
+        if(e.code !== 'auth/email-already-exists') {
+            console.error("Error creating demo customer auth user", e);
+        } else {
+             console.log("Demo customer auth user already exists.");
+        }
+    }
+    
     // ** Special data population for luisdiego@gosenku.com **
     if (adminEmail === 'luisdiego@gosenku.com') {
         const customersCollectionRef = collection(db, "tenants", tenantId, "customers");
@@ -106,3 +121,34 @@ export const createNewTenant = async (tenantId: string, businessName: string, ad
 
     await batch.commit();
 }
+
+export const createNewCustomer = async (tenantId: string, programId: string, customerData: Record<string, any>) => {
+    // 1. Create the user in Firebase Auth
+    const userRecord = await adminAuth.createUser({
+        email: customerData.email,
+        password: customerData.password,
+        displayName: customerData.name,
+    });
+
+    // 2. Create the customer document in Firestore, using the UID from Auth as the document ID
+    const customerRef = doc(db, "tenants", tenantId, "customers", userRecord.uid);
+    const initials = customerData.name.split(' ').map((n: string) => n[0]).join('').toUpperCase();
+
+    const firestoreData = {
+        name: customerData.name,
+        email: customerData.email,
+        phone: customerData.phone || '',
+        cedula: customerData.cedula || '',
+        programId: programId,
+        tier: 'Bronce',
+        points: 0,
+        segment: 'Nuevo miembro',
+        joined: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+        initials: initials,
+        history: [],
+    };
+    
+    await customerRef.set(firestoreData);
+
+    return { uid: userRecord.uid };
+};
