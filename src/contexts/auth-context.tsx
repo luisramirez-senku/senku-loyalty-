@@ -26,10 +26,12 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// This function creates the basic tenant document without any demo data
+// This function creates the basic tenant document with demo data
 const createNewTenant = async (tenantId: string, businessName: string, adminEmail: string, signupData: Record<string, any>) => {
-    const tenantRef = doc(db, "tenants", tenantId);
+    const batch = writeBatch(db);
     
+    // 1. Create Tenant Document
+    const tenantRef = doc(db, "tenants", tenantId);
     const trialEndDate = new Date();
     trialEndDate.setDate(trialEndDate.getDate() + 14); // 14-day trial
 
@@ -40,8 +42,7 @@ const createNewTenant = async (tenantId: string, businessName: string, adminEmai
         plan: "Crecimiento",
         status: "Prueba",
         trialEnds: trialEndDate,
-        logoUrl: "https://placehold.co/100x100.png", // Default placeholder
-        // Store the survey and billing info
+        logoUrl: "https://placehold.co/100x100.png",
         survey: {
             industry: signupData.industry,
             businessSize: signupData.businessSize,
@@ -54,20 +55,52 @@ const createNewTenant = async (tenantId: string, businessName: string, adminEmai
             taxId: signupData.taxId,
         }
     };
-
-    // Create the tenant and the first admin user in a batch to ensure atomicity
-    const batch = writeBatch(db);
     batch.set(tenantRef, tenantData);
 
+    // 2. Create a default loyalty program for the new tenant
+    const programRef = doc(collection(db, "tenants", tenantId, "programs"));
+    const programData = {
+        name: "Programa de Recompensas Principal",
+        type: "Puntos",
+        status: "Activo",
+        members: 1, // Starting with one demo member
+        created: new Date().toISOString().split('T')[0],
+        description: "Programa de lealtad predeterminado para todos los clientes.",
+        rules: { pointsPerAmount: 10, amountForPoints: 1 },
+        design: { logoText: businessName, backgroundColor: "#2962FF", foregroundColor: "#FFFFFF" }
+    };
+    batch.set(programRef, programData);
+    
+    // 3. Create the first admin user for the tenant
     const adminUserRef = doc(db, "tenants", tenantId, "users", tenantId);
     batch.set(adminUserRef, {
-        name: businessName,
+        name: "Admin " + businessName,
         email: adminEmail,
         role: "Admin",
         status: "Activo",
         lastLogin: new Date().toLocaleDateString(),
         initials: businessName.split(' ').map(n => n[0]).join('').toUpperCase()
     });
+
+    // 4. Create a sample customer for demonstration
+    const customerRef = doc(collection(db, "tenants", tenantId, "customers"));
+    const demoCustomerName = "Cliente Demo";
+    batch.set(customerRef, {
+        name: demoCustomerName,
+        email: "cliente.demo@email.com",
+        phone: "555-0101",
+        programId: programRef.id, // Link to the created program
+        tier: 'Bronce',
+        points: 1250,
+        segment: 'Nuevo miembro',
+        joined: new Date().toISOString().split('T')[0],
+        initials: demoCustomerName.split(' ').map(n => n[0]).join(''),
+        history: [
+            { id: 'tx_1', date: new Date().toISOString().split('T')[0], description: 'Bono de bienvenida', points: 250 },
+            { id: 'tx_2', date: new Date().toISOString().split('T')[0], description: 'Primera compra', points: 1000 },
+        ],
+    });
+
 
     await batch.commit();
 }
