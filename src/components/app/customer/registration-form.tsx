@@ -76,7 +76,7 @@ export default function CustomerRegistrationForm({ programId, tenantId }: Custom
         
         toast({
             title: "¡Registro exitoso!",
-            description: "Bienvenido al programa de lealtad. Ahora puedes buscar tu cuenta.",
+            description: "Bienvenido al programa de lealtad. Ahora puedes iniciar sesión.",
         });
         setSubmitted(true);
     } catch (error: any) {
@@ -101,13 +101,13 @@ export default function CustomerRegistrationForm({ programId, tenantId }: Custom
             <CardHeader>
                 <CardTitle className="text-center text-2xl">¡Gracias por registrarte!</CardTitle>
                 <CardDescription className="text-center">
-                    Tu cuenta ha sido creada. Ahora puedes buscar tus programas de lealtad.
+                    Tu cuenta ha sido creada. Ahora puedes iniciar sesión para ver tus programas.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 <Link href="/customer/find" passHref>
                     <Button className="w-full">
-                        Buscar mi cuenta
+                        Ir a Iniciar Sesión
                     </Button>
                 </Link>
             </CardContent>
