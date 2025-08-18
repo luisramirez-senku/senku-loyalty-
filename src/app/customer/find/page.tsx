@@ -13,41 +13,53 @@ import { Loader } from 'lucide-react';
 import Logo from '@/components/app/shared/logo';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/use-auth';
 
-export default function CustomerLookupPage() {
+export default function CustomerLoginPage() {
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
+  const { login } = useAuth();
 
-  const handleLookup = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      toast({ variant: 'destructive', title: 'Correo requerido', description: 'Por favor, introduce tu correo electrónico.' });
+    if (!email || !password) {
+      toast({ variant: 'destructive', title: 'Campos requeridos', description: 'Por favor, introduce tu correo y contraseña.' });
       return;
     }
     setLoading(true);
 
     try {
+        // Step 1: Log in the user via Firebase Auth
+        await login(email, password);
+
+        // Step 2: Find which loyalty programs they belong to
         const customersRef = collectionGroup(db, 'customers');
         const q = query(customersRef, where('email', '==', email.toLowerCase()));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
-            toast({ variant: 'destructive', title: 'No encontrado', description: 'No pudimos encontrar una cuenta con ese correo electrónico.' });
+            toast({ variant: 'destructive', title: 'No encontrado', description: 'No estás inscrito en ningún programa de lealtad.' });
+            // Optionally log the user out if they have an auth account but no loyalty profile
         } else if (querySnapshot.size === 1) {
-            // Only one program, redirect directly
+            // Only one program, redirect directly to their dashboard
             const customerDoc = querySnapshot.docs[0];
             router.push(`/customer/${customerDoc.id}`);
-            toast({ title: '¡Éxito!', description: 'Redirigiendo a tu panel de lealtad.' });
+            toast({ title: '¡Bienvenido!', description: 'Redirigiendo a tu panel de lealtad.' });
         } else {
             // Multiple programs, redirect to selection page
             router.push(`/customer/programs?email=${encodeURIComponent(email)}`);
         }
 
-    } catch (error) {
-      console.error('Error looking up customer:', error);
-      toast({ variant: 'destructive', title: 'Error', description: 'Ocurrió un problema al buscar tu cuenta.' });
+    } catch (error: any) {
+      console.error('Error de inicio de sesión del cliente:', error);
+      let errorMessage = "Ocurrió un problema al iniciar sesión.";
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-credential') {
+        errorMessage = "Correo electrónico o contraseña incorrectos.";
+      }
+      toast({ variant: 'destructive', title: 'Error de inicio de sesión', description: errorMessage });
     } finally {
       setLoading(false);
     }
@@ -61,13 +73,13 @@ export default function CustomerLookupPage() {
         </Link>
         <Card className="w-full max-w-md">
             <CardHeader>
-                <CardTitle>Consulta tus Puntos</CardTitle>
+                <CardTitle>Bienvenido a tus Programas</CardTitle>
                 <CardDescription>
-                    Ingresa tu correo electrónico para ver tu tarjeta de lealtad, puntos y recompensas.
+                    Inicia sesión para ver tu tarjeta de lealtad, puntos y recompensas.
                 </CardDescription>
             </CardHeader>
             <CardContent>
-                <form onSubmit={handleLookup} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4">
                     <div className="grid w-full items-center gap-1.5">
                         <Label htmlFor="email">Correo electrónico</Label>
                         <Input
@@ -80,9 +92,21 @@ export default function CustomerLookupPage() {
                             required
                         />
                     </div>
+                     <div className="grid w-full items-center gap-1.5">
+                        <Label htmlFor="password">Contraseña</Label>
+                        <Input
+                            type="password"
+                            id="password"
+                            placeholder="••••••••"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            disabled={loading}
+                            required
+                        />
+                    </div>
                     <Button type="submit" className="w-full" disabled={loading}>
                         {loading ? <Loader className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        Buscar mi cuenta
+                        Iniciar Sesión
                     </Button>
                 </form>
             </CardContent>
