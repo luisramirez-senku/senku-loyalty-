@@ -4,15 +4,59 @@
  */
 
 import {setGlobalOptions} from "firebase-functions";
+import {firestore} from "firebase-functions/v2";
 import {onRequest} from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
+import {Resend} from "resend";
+import {WelcomeEmail} from "./emails/welcome-email";
 
 admin.initializeApp();
 const db = admin.firestore();
 
 // Set global options for functions (e.g., region, memory)
 setGlobalOptions({region: "us-central1"});
+
+
+// --- Email Functions ---
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export const sendWelcomeEmail = firestore.document("tenants/{tenantId}/customers/{customerId}")
+  .onCreate(async (snap, context) => {
+    const customerData = snap.data();
+    const {tenantId} = context.params;
+
+    try {
+      // Get tenant data to personalize the email
+      const tenantDoc = await db.collection("tenants").doc(tenantId).get();
+      const tenantData = tenantDoc.data();
+
+      if (!tenantData) {
+        logger.error(`Tenant ${tenantId} not found.`);
+        return;
+      }
+
+      const {data, error} = await resend.emails.send({
+        from: `Senku Lealtad <no-reply@${process.env.GCLOUD_PROJECT}.web.app>`,
+        to: [customerData.email],
+        subject: `¡Bienvenido a ${tenantData.name}!`,
+        react: WelcomeEmail({
+          customerName: customerData.name,
+          tenantName: tenantData.name,
+          tenantLogo: tenantData.logoUrl,
+        }) as React.ReactElement,
+      });
+
+      if (error) {
+        logger.error(`Error sending welcome email to ${customerData.email}`, error);
+        return;
+      }
+
+      logger.info(`Welcome email sent successfully to ${customerData.email}`, {emailId: data?.id});
+    } catch (error) {
+      logger.error("Error in sendWelcomeEmail function execution:", error);
+    }
+  });
 
 
 // --- PayPal Webhook Handler ---
@@ -26,7 +70,7 @@ const getPayPalAccessToken = async () => {
   const response = await fetch("https://api.sandbox.paypal.com/v1/oauth2/token", {
     method: "POST",
     body: "grant_type=client_credentials",
-    headers: { Authorization: `Basic ${auth}` },
+    headers: {Authorization: `Basic ${auth}`},
   });
 
   const data = await response.json();
@@ -70,7 +114,7 @@ export const paypalWebhookHandler = onRequest(async (request, response) => {
   }
 
   const event = request.body as PaypalWebhookEvent;
-  const { event_type, resource } = event;
+  const {event_type, resource} = event;
 
   logger.info(`Processing event type: ${event_type}`);
 
@@ -92,7 +136,7 @@ export const paypalWebhookHandler = onRequest(async (request, response) => {
         return;
       }
 
-      await querySnapshot.docs[0].ref.update({ status: "Activo" });
+      await querySnapshot.docs[0].ref.update({status: "Activo"});
       logger.info(`Tenant ${querySnapshot.docs[0].id} status updated to Activo.`);
     }
 
@@ -107,7 +151,7 @@ export const paypalWebhookHandler = onRequest(async (request, response) => {
         return;
       }
 
-      await querySnapshot.docs[0].ref.update({ status: "Cancelado" });
+      await querySnapshot.docs[0].ref.update({status: "Cancelado"});
       logger.info(`Tenant ${querySnapshot.docs[0].id} status updated to Cancelado.`);
     }
 
@@ -117,5 +161,3 @@ export const paypalWebhookHandler = onRequest(async (request, response) => {
     response.status(500).send("Internal Server Error");
   }
 });
-
-    
