@@ -105,7 +105,7 @@ export const createWalletClass = onRequest(
       response.json({walletClassId: classId});
     } catch (error: any) {
       logger.error("Error creating wallet class:", error.response?.data || error.message);
-      response.status(500).send("Error creating wallet class.");
+      response.status(500).send(`Error creating wallet class: ${error.response?.data?.error?.message || error.message}`);
     }
   }
 );
