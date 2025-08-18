@@ -1,8 +1,9 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, updateDoc, addDoc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -35,6 +36,7 @@ import { DeactivateUserDialog } from "./deactivate-user-dialog";
 import { toast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
+import { createNewUser } from "@/lib/firebase/actions";
 
 export type UserRole = "Cajero" | "Gerente" | "Admin";
 export type UserStatus = "Activo" | "Inactivo";
@@ -96,10 +98,9 @@ export default function UserManagement() {
 
   const handleSaveUser = async (userData: Omit<User, 'id' | 'initials' | 'lastLogin' | 'status'> & { id?: string }) => {
     if (!authUser) return;
-    const usersCollection = collection(db, "tenants", authUser.uid, "users");
     try {
         if (userData.id) { // Editing existing user
-            const userRef = doc(usersCollection, userData.id);
+            const userRef = doc(db, "tenants", authUser.uid, "users", userData.id);
             const { id, ...dataToUpdate } = userData;
             await updateDoc(userRef, dataToUpdate);
 
@@ -107,22 +108,21 @@ export default function UserManagement() {
             setUsers(users.map(u => u.id === id ? updatedUser : u));
             toast({ title: "Usuario Actualizado", description: "Los datos del usuario han sido guardados." });
         } else { // Adding new user
-            const initials = userData.name.split(' ').map(n => n[0]).join('').toUpperCase();
-            const newUserDocData = {
-                ...userData,
-                initials,
-                status: 'Activo' as UserStatus,
-                lastLogin: 'Nunca',
-            };
-            const docRef = await addDoc(usersCollection, newUserDocData);
-            const newUser = { ...newUserDocData, id: docRef.id };
-            setUsers([...users, newUser]);
-            toast({ title: "Usuario Agregado", description: "El nuevo usuario ha sido creado." });
+            const newUser = await createNewUser(authUser.uid, userData as any); // Cast because role is already validated
+            const userDocRef = doc(db, "tenants", authUser.uid, "users", newUser.uid);
+            const userDocSnap = await getDoc(userDocRef);
+            const newUserDoc = { id: userDocSnap.id, ...userDocSnap.data() } as User;
+            setUsers([...users, newUserDoc]);
+            toast({ title: "Usuario Agregado", description: "El nuevo usuario ha sido creado. La contraseña temporal se ha mostrado en la consola del servidor." });
         }
         setAddEditOpen(false);
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error guardando el usuario:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el usuario." });
+        let desc = "No se pudo guardar el usuario.";
+        if (error.message.includes("EMAIL_EXISTS")) {
+            desc = "Ya existe un usuario con este correo electrónico."
+        }
+        toast({ variant: "destructive", title: "Error", description: desc });
     }
   };
 

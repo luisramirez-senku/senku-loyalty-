@@ -36,6 +36,7 @@ import { ViewHistoryDialog } from "./view-history-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { createNewCustomer } from "@/lib/firebase/actions"; // Assuming a similar action exists or can be created
 
 // Tipos de datos
 export type Customer = {
@@ -49,6 +50,7 @@ export type Customer = {
     initials: string;
     history?: Transaction[];
     fcmToken?: string;
+    programId?: string;
 };
 
 export type Transaction = {
@@ -129,34 +131,48 @@ export default function CustomerManagement() {
         setDeleteOpen(true);
     }
 
-    const onCustomerSave = async (customerData: Omit<Customer, 'id' | 'initials' | 'joined'> & { id?: string }) => {
+    const onCustomerSave = async (customerData: Omit<Customer, 'id' | 'initials' | 'joined'> & { id?: string; password?: string }) => {
         if (!user) return;
         try {
-            const { id, ...dataToAdd } = customerData;
+            const { id, password, ...dataToSave } = customerData;
             if (id) { // Editing existing customer
                 const customerRef = doc(db, "tenants", user.uid, "customers", id);
-                await updateDoc(customerRef, dataToAdd);
-                const updatedCustomer = { ...customers.find(c => c.id === id)!, ...dataToAdd };
+                await updateDoc(customerRef, dataToSave);
+                const updatedCustomer = { ...customers.find(c => c.id === id)!, ...dataToSave };
                 const updatedList = customers.map(c => c.id === id ? updatedCustomer : c);
                 setCustomers(updatedList);
                 applyFilters(segmentFilter, dateFilter, updatedList);
                  toast({ title: "Cliente Actualizado", description: "Los datos del cliente han sido guardados." });
             } else { // Adding new customer
-                const initials = dataToAdd.name.split(' ').map(n => n[0]).join('');
-                const joined = new Date().toISOString().split('T')[0];
-                const newCustomerData = { ...dataToAdd, initials, joined };
-                const customersCollection = collection(db, "tenants", user.uid, "customers");
-                const docRef = await addDoc(customersCollection, newCustomerData);
-                const newCustomer = { ...newCustomerData, id: docRef.id };
-                const updatedList = [...customers, newCustomer];
+                // You must have a default program to assign the customer to.
+                // This logic might need to be more sophisticated.
+                const programsCollection = collection(db, "tenants", user.uid, "programs");
+                const programsSnapshot = await getDocs(programsCollection);
+                if (programsSnapshot.empty) {
+                    toast({ variant: "destructive", title: "Error", description: "No hay programas de lealtad creados. Por favor, cree uno primero."});
+                    return;
+                }
+                const defaultProgramId = programsSnapshot.docs[0].id; // Assign to the first program found
+
+                const newCustomer = await createNewCustomer(user.uid, defaultProgramId, dataToSave);
+                
+                const customerDocRef = doc(db, "tenants", user.uid, "customers", newCustomer.uid);
+                const customerDocSnap = await getDoc(customerDocRef);
+                const newCustomerDoc = { id: customerDocSnap.id, ...customerDocSnap.data() } as Customer;
+
+                const updatedList = [...customers, newCustomerDoc];
                 setCustomers(updatedList);
                 applyFilters(segmentFilter, dateFilter, updatedList);
                  toast({ title: "Cliente Agregado", description: "El nuevo cliente ha sido creado." });
             }
             setEditOpen(false);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error guardando el cliente:", error);
-            toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el cliente."});
+            let desc = "No se pudo guardar el cliente.";
+            if (error.message.includes("email-already-exists")) {
+                desc = "Ya existe un usuario con este correo electrónico."
+            }
+            toast({ variant: "destructive", title: "Error", description: desc});
         }
     };
 

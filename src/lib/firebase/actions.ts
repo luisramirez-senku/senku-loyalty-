@@ -40,7 +40,9 @@ export const createNewTenant = async (tenantId: string, businessName: string, ad
     batch.set(tenantRef, tenantData);
 
     // 2. Create a default loyalty program for the new tenant
-    const programRef = doc(collection(db, "tenants", tenantId, "programs"));
+    // Generate the program ID beforehand so we can use it in the demo customer
+    const programCollectionRef = collection(db, "tenants", tenantId, "programs");
+    const programRef = doc(programCollectionRef); // Creates a new doc with a random ID
     const programData = {
         name: "Programa de Recompensas Principal",
         type: "Puntos",
@@ -74,11 +76,12 @@ export const createNewTenant = async (tenantId: string, businessName: string, ad
             password: demoCustomerPassword,
             displayName: demoCustomerName,
         });
-        batch.set(doc(db, "tenants", tenantId, "customers", demoUserRecord.uid), {
+        const demoCustomerRef = doc(db, "tenants", tenantId, "customers", demoUserRecord.uid);
+        batch.set(demoCustomerRef, {
             name: demoCustomerName,
             email: demoCustomerEmail,
             phone: "555-0101",
-            programId: programRef.id,
+            programId: programRef.id, // Use the pre-generated program ID
             tier: 'Bronce',
             points: 1250,
             segment: 'Nuevo miembro',
@@ -154,5 +157,35 @@ export const createNewCustomer = async (tenantId: string, programId: string, cus
     
     await customerRef.set(firestoreData);
 
+    return { uid: userRecord.uid };
+};
+
+// Server action to create a user (for admin panel)
+export const createNewUser = async (tenantId: string, userData: { name: string; email: string; role: 'Cajero' | 'Gerente' | 'Admin' }) => {
+    // 1. Create user in Firebase Auth
+    const tempPassword = Math.random().toString(36).slice(-8); // Generate temporary password
+    const userRecord = await adminAuth.createUser({
+      email: userData.email,
+      password: tempPassword,
+      displayName: userData.name,
+    });
+  
+    // 2. Create user document in Firestore
+    const userRef = doc(db, "tenants", tenantId, "users", userRecord.uid);
+    const initials = userData.name.split(' ').map((n: string) => n[0]).join('').toUpperCase();
+  
+    await userRef.set({
+      name: userData.name,
+      email: userData.email,
+      role: userData.role,
+      status: 'Activo',
+      lastLogin: 'Nunca',
+      initials: initials,
+    });
+  
+    // In a real application, you'd likely want to send the temporary password to the user
+    // via a secure channel (e.g., email), but for now, we'll log it.
+    console.log(`User ${userData.email} created with temporary password: ${tempPassword}`);
+  
     return { uid: userRecord.uid };
 };
