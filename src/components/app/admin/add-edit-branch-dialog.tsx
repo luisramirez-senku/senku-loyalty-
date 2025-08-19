@@ -193,7 +193,7 @@ export function AddEditBranchDialog({
            
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setIsOpen(false)}>Cancelar</Button>
-              <Button type="submit" disabled={!isLoaded || loadError}>{isEditing ? "Guardar Cambios" : "Crear Sucursal"}</Button>
+              <Button type="submit" disabled={!isLoaded || !!loadError}>{isEditing ? "Guardar Cambios" : "Crear Sucursal"}</Button>
             </DialogFooter>
           </form>
         </Form>

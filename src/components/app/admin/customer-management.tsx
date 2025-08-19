@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteDoc, addDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import type { DateRange } from "react-day-picker";
 import { Badge } from "@/components/ui/badge";

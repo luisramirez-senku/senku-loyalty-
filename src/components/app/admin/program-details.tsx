@@ -1,6 +1,7 @@
 
 "use client";
 
+import React from "react";
 import type { Program } from "./program-management";
 import {
   Card,
@@ -68,7 +69,7 @@ const recentTransactions = [
 
 export default function ProgramDetails({ program }: ProgramDetailsProps) {
   const { user } = useAuth();
-  const [fullRegistrationUrl, setFullRegistrationUrl] = useState("");
+  const [fullRegistrationUrl, setFullRegistrationUrl] = React.useState("");
 
   // We need to build the URL on the client side to access window.location.origin
   React.useEffect(() => {

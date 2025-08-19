@@ -85,7 +85,8 @@ export function EditCustomerDialog({
     }
     onSave({
       id: customer?.id,
-      ...values
+      ...values,
+      segment: values.segment as Customer['segment'],
     });
   }
 

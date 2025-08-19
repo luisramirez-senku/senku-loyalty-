@@ -1,68 +1,131 @@
 
-
-/**
- * See a full list of supported triggers at https://firebase.google.com/docs/functions
- */
-
 import {setGlobalOptions} from "firebase-functions";
-import {firestore} from "firebase-functions/v2";
 import {onRequest} from "firebase-functions/v2/https";
+import * as functions from "firebase-functions";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
-import {Resend} from "resend";
-import {WelcomeEmail} from "./emails/welcome-email";
 
 admin.initializeApp();
 const db = admin.firestore();
+const auth = admin.auth();
 
-// Set global options for functions (e.g., region, memory)
+// Set global options for functions
 setGlobalOptions({region: "us-central1"});
 
 
-// --- Email Functions ---
-const resend = new Resend(process.env.RESEND_API_KEY);
+/**
+ * Sets up a new tenant environment when a user is created.
+ * This function is triggered by Firebase Auth on user creation.
+ */
+export const setupNewUser = functions.auth.user().onCreate(async (user) => {
+  const {uid, email} = user;
 
-export const sendWelcomeEmail = firestore.document("tenants/{tenantId}/customers/{customerId}")
-  .onCreate(async (snap, context) => {
-    const customerData = snap.data();
-    const {tenantId} = context.params;
+  if (!email) {
+    logger.warn(`User ${uid} created without an email. Skipping setup.`);
+    return;
+  }
 
-    try {
-      // Get tenant data to personalize the email
-      const tenantDoc = await db.collection("tenants").doc(tenantId).get();
-      const tenantData = tenantDoc.data();
+  logger.info(`New user created: ${email} (${uid}). Starting setup process.`);
 
-      if (!tenantData) {
-        logger.error(`Tenant ${tenantId} not found.`);
-        return;
-      }
+  // 1. Get additional signup data from the 'pendingTenants' collection
+  const pendingDocRef = db.collection("pendingTenants").doc(uid);
+  const pendingDoc = await pendingDocRef.get();
 
-      const {data, error} = await resend.emails.send({
-        from: `Senku Lealtad <no-reply@${process.env.GCLOUD_PROJECT}.web.app>`,
-        to: [customerData.email],
-        subject: `¡Bienvenido a ${tenantData.name}!`,
-        react: WelcomeEmail({
-          customerName: customerData.name,
-          tenantName: tenantData.name,
-          tenantLogo: tenantData.logoUrl,
-        }) as React.ReactElement,
+  if (!pendingDoc.exists) {
+    logger.error(`Pending tenant data not found for user ${uid}.`);
+    // Critical error: delete the user to prevent an orphaned account
+    await auth.deleteUser(uid);
+    logger.info(`Deleted orphaned user ${uid}.`);
+    return;
+  }
+
+  const signupData = pendingDoc.data();
+  const businessName = signupData?.businessName || "Mi Negocio";
+
+  try {
+    // 2. Run all database creations in a single atomic transaction
+    await db.runTransaction(async (transaction) => {
+      // Create Tenant Document
+      const tenantRef = db.collection("tenants").doc(uid);
+      const trialEndDate = new Date();
+      trialEndDate.setDate(trialEndDate.getDate() + 14); // 14-day trial
+
+      const tenantData = {
+        name: businessName,
+        ownerEmail: email,
+        createdAt: new Date().toISOString(),
+        plan: "Crecimiento",
+        status: "Prueba",
+        trialEnds: trialEndDate,
+        logoUrl: "https://placehold.co/100x100.png",
+        survey: {
+          industry: signupData?.industry,
+          businessSize: signupData?.businessSize,
+          goals: signupData?.goals,
+        },
+        billingInfo: {
+          address: signupData?.billingAddress,
+          city: signupData?.city,
+          country: signupData?.country,
+          taxId: signupData?.taxId,
+        },
+      };
+      transaction.set(tenantRef, tenantData);
+
+      // Create a default loyalty program
+      const programRef = tenantRef.collection("programs").doc();
+      transaction.set(programRef, {
+        name: "Programa de Recompensas Principal",
+        type: "Puntos",
+        status: "Activo",
+        members: 0,
+        created: new Date().toISOString().split("T")[0],
+        description: "Programa de lealtad predeterminado.",
+        rules: {pointsPerAmount: 10, amountForPoints: 1},
+        design: {logoText: businessName, backgroundColor: "#2962FF", foregroundColor: "#FFFFFF"},
       });
 
-      if (error) {
-        logger.error(`Error sending welcome email to ${customerData.email}`, error);
-        return;
+      // Create the first admin user for the tenant
+      const adminUserRef = tenantRef.collection("users").doc(uid);
+      transaction.set(adminUserRef, {
+        name: "Admin " + businessName,
+        email: email,
+        role: "Admin",
+        status: "Activo",
+        lastLogin: new Date().toLocaleDateString(),
+        initials: businessName.split(" ").map((n: string) => n[0]).join("").toUpperCase(),
+      });
+
+      // ** Special data population for specific email **
+      if (email === "luisdiego@gosenku.com") {
+        const customersCollectionRef = tenantRef.collection("customers");
+        const rewardsCollectionRef = tenantRef.collection("rewards");
+        const usersCollectionRef = tenantRef.collection("users");
+        const branchesCollectionRef = tenantRef.collection("branches");
+
+        transaction.set(customersCollectionRef.doc(), {name: "Ana Torres", email: "ana.t@example.com", tier: "Oro", points: 15200, segment: "VIP", joined: "2023-01-15", initials: "AT", history: []});
+        transaction.set(customersCollectionRef.doc(), {name: "Carlos Vega", email: "carlos.v@example.com", tier: "Plata", points: 6500, segment: "Comprador frecuente", joined: "2023-05-20", initials: "CV", history: []});
+        transaction.set(rewardsCollectionRef.doc(), {name: "Café Gratis", description: "Cualquier café mediano.", cost: 1500});
+        transaction.set(usersCollectionRef.doc(), {name: "Cajero de Ejemplo", email: "cajero@example.com", role: "Cajero", status: "Activo", lastLogin: "2024-05-20", initials: "CE"});
+        transaction.set(branchesCollectionRef.doc(), {name: "Sucursal Principal", address: "Avenida Central 123, San José", location: {lat: 9.9333, lng: -84.0833}});
       }
 
-      logger.info(`Welcome email sent successfully to ${customerData.email}`, {emailId: data?.id});
-    } catch (error) {
-      logger.error("Error in sendWelcomeEmail function execution:", error);
-    }
-  });
+      // After the transaction, delete the pending document
+      transaction.delete(pendingDocRef);
+    });
+
+    logger.info(`Successfully set up tenant for user ${uid}.`);
+  } catch (error) => {
+    logger.error(`Failed to set up tenant for user ${uid}. Deleting user.`, error);
+    // If the transaction fails, delete the user to roll back
+    await auth.deleteUser(uid);
+    logger.info(`Deleted user ${uid} after setup failure.`);
+  }
+});
 
 
-// --- PayPal Webhook Handler ---
+// --- Existing PayPal Webhook Handler ---
 
-// Function to get PayPal access token
 const getPayPalAccessToken = async () => {
   const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID;
   const clientSecret = process.env.PAYPAL_SECRET;
@@ -89,6 +152,7 @@ interface PaypalWebhookEvent {
 export const paypalWebhookHandler = onRequest(async (request, response) => {
   logger.info("PayPal webhook received");
 
+  // ... (rest of the PayPal webhook logic remains unchanged)
   const accessToken = await getPayPalAccessToken();
   const verificationResponse = await fetch("https://api.sandbox.paypal.com/v1/notifications/verify-webhook-signature", {
     method: "POST",

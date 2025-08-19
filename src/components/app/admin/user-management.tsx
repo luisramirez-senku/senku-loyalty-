@@ -3,7 +3,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { collection, getDocs, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, getDocs, doc, updateDoc, deleteDoc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase/client";
 import { Badge } from "@/components/ui/badge";
 import {

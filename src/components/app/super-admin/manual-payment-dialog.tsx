@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/select";
 import type { Tenant } from "./tenant-management";
 
-type TenantPlan = "Esencial" | "Crecimiento" | "Empresarial";
+type TenantPlan = "Gratis" | "Pro" | "Esencial" | "Crecimiento" | "Empresarial";
 type TenantStatus = "Activo" | "Prueba" | "Cancelado" | "Suspendido";
 
 interface ManualPaymentDialogProps {
@@ -42,7 +42,7 @@ interface ManualPaymentDialogProps {
 }
 
 const formSchema = z.object({
-  plan: z.enum(["Esencial", "Crecimiento", "Empresarial"], {
+  plan: z.enum(["Gratis", "Pro", "Esencial", "Crecimiento", "Empresarial"], {
     required_error: "Se requiere un plan.",
   }),
 });
@@ -116,4 +116,3 @@ export function ManualPaymentDialog({
     </Dialog>
   );
 }
-
