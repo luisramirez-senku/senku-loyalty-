@@ -6,15 +6,14 @@ import { getAuth } from "firebase/auth";
 import { getMessaging } from "firebase/messaging";
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  "projectId": "senku-loyalty",
-  "appId": "1:397386576935:web:ddcafaae08a10fe63d8a02",
-  "storageBucket": "senku-loyalty.firebasestorage.app",
-  "apiKey": "AIzaSyAfsfCflALMh-zbq4dh9jUAu4d3-kLUVTg",
-  "authDomain": "senku-loyalty.firebaseapp.com",
-  "measurementId": "",
-  "messagingSenderId": "397386576935"
+  apiKey: "AIzaSyDh0aiWWDOBErlDenlyG2dD-n9Vi1GvNBs",
+  authDomain: "senku-loyalty-469317.firebaseapp.com",
+  projectId: "senku-loyalty-469317",
+  storageBucket: "senku-loyalty-469317.firebasestorage.app",
+  messagingSenderId: "887126370737",
+  appId: "1:887126370737:web:5d58cd0674eec015f43590",
+  measurementId: "G-EEQJ2W2TBH"
 };
 
 // Initialize Firebase
