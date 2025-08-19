@@ -15,16 +15,16 @@ cpu: 1
 # You must create these secrets in your project before deploying.
 env:
   - variable: NEXT_PUBLIC_FIREBASE_API_KEY
-    secret: NEXT_PUBLIC_FIREBASE_API_KEY
+    secret: AIzaSyDh0aiWWDOBErlDenlyG2dD-n9Vi1GvNBs
   - variable: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-    secret: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+    secret: senku-loyalty-469317.firebaseapp.com
   - variable: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-    secret: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+    secret: senku-loyalty-469317
   - variable: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-    secret: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+    secret: senku-loyalty-469317.firebasestorage.app
   - variable: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-    secret: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+    secret: 887126370737
   - variable: NEXT_PUBLIC_FIREBASE_APP_ID
-    secret: NEXT_PUBLIC_FIREBASE_APP_ID
+    secret: 1:887126370737:web:5d58cd0674eec015f43590
   - variable: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
-    secret: NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+    secret: G-EEQJ2W2TBH
