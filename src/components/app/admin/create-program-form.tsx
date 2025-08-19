@@ -54,6 +54,14 @@ const formSchema = z.object({
 
 type ProgramType = "Puntos" | "Sellos" | "Cashback";
 
+// Helper function to sanitize numeric values for Firestore
+const sanitizeNumber = (value: number | null | undefined): number | null => {
+    if (value === null || value === undefined || !Number.isFinite(value)) {
+        return null;
+    }
+    return value;
+}
+
 export default function CreateProgramForm() {
     const { user } = useAuth();
     const [step, setStep] = useState(1);
@@ -92,10 +100,10 @@ export default function CreateProgramForm() {
                 created: new Date().toISOString().split('T')[0],
                 description: values.programDescription || "",
                 rules: {
-                    pointsPerAmount: values.pointsPerAmount || null,
-                    amountForPoints: values.amountForPoints || null,
-                    stampsCount: values.stampsCount || null,
-                    cashbackPercentage: values.cashbackPercentage || null,
+                    pointsPerAmount: sanitizeNumber(values.pointsPerAmount),
+                    amountForPoints: sanitizeNumber(values.amountForPoints),
+                    stampsCount: sanitizeNumber(values.stampsCount),
+                    cashbackPercentage: sanitizeNumber(values.cashbackPercentage),
                 },
                 design: {
                     logoText: values.issuerName,
