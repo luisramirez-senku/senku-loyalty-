@@ -30,4 +30,8 @@ const messaging = () => {
     return null;
 }
 
+if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    (window as any).auth = auth;
+}
+
 export { app, db, auth, messaging };

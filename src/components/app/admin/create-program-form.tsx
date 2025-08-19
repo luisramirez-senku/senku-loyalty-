@@ -55,9 +55,9 @@ const formSchema = z.object({
 type ProgramType = "Puntos" | "Sellos" | "Cashback";
 
 // Helper function to sanitize numeric values for Firestore
-const sanitizeNumber = (value: number | null | undefined): number | null => {
+const sanitizeNumber = (value: number | null | undefined): number | undefined => {
     if (value === null || value === undefined || !Number.isFinite(value)) {
-        return null;
+        return undefined;
     }
     return value;
 }
@@ -92,25 +92,38 @@ export default function CreateProgramForm() {
         try {
             const programsCollection = collection(db, "tenants", user.uid, "programs");
             
-            const programData = {
+            const programData: any = {
                 name: values.programName,
                 type: values.programType,
                 status: "Activo",
                 members: 0,
                 created: new Date().toISOString().split('T')[0],
                 description: values.programDescription || "",
-                rules: {
-                    pointsPerAmount: sanitizeNumber(values.pointsPerAmount),
-                    amountForPoints: sanitizeNumber(values.amountForPoints),
-                    stampsCount: sanitizeNumber(values.stampsCount),
-                    cashbackPercentage: sanitizeNumber(values.cashbackPercentage),
-                },
                 design: {
                     logoText: values.issuerName,
                     backgroundColor: "#2962FF", // Default color
                     foregroundColor: "#FFFFFF", // Default color
-                }
+                },
+                rules: {}
             };
+
+            const pointsPerAmount = sanitizeNumber(values.pointsPerAmount);
+            const amountForPoints = sanitizeNumber(values.amountForPoints);
+            const stampsCount = sanitizeNumber(values.stampsCount);
+            const cashbackPercentage = sanitizeNumber(values.cashbackPercentage);
+
+            if (pointsPerAmount !== undefined) {
+                programData.rules.pointsPerAmount = pointsPerAmount;
+            }
+            if (amountForPoints !== undefined) {
+                programData.rules.amountForPoints = amountForPoints;
+            }
+            if (stampsCount !== undefined) {
+                programData.rules.stampsCount = stampsCount;
+            }
+            if (cashbackPercentage !== undefined) {
+                programData.rules.cashbackPercentage = cashbackPercentage;
+            }
     
             await addDoc(programsCollection, programData);
     
